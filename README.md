@@ -1,75 +1,20 @@
-# Nuxt Minimal Starter
+# OmniSync Portfolio
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Portfolio website with automatic GitHub, LinkedIn, Instagram, and TikTok sync, AI-powered summarization, and CV PDF generation.
 
-## Setup
+## Stack
+- **Backend**: Laravel 13 REST API
+- **Frontend**: Nuxt 4 SSR + TailwindCSS
+- **Database**: PostgreSQL 16
+- **Cache/Queue**: Redis 7
+- **Infra**: Docker Compose
 
-Make sure to install dependencies:
-
+## Quick start
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+docker compose up -d
+docker compose exec laravel-api php artisan migrate
+docker compose exec nuxt-frontend npm run dev
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Architecture
+Services: `docker-compose.yml` defines 6 containers (postgres, redis, laravel-api, laravel-queue, nginx, nuxt-frontend).
