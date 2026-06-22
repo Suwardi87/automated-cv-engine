@@ -1,0 +1,29 @@
+# Laravel
+/backend/vendor
+/backend/node_modules
+/backend/.env
+/backend/storage/*.key
+/backend/bootstrap/cache/*
+
+# Nuxt
+/frontend/.nuxt
+/frontend/.output
+/frontend/node_modules
+/frontend/dist
+
+# Docker
+/storage-laravel
+
+# OS
+.DS_Store
+*.log
+
+# IDE
+.fleet
+.idea
+.vscode
+
+# Env
+.env
+.env.local
+config.local.env

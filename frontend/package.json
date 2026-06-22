@@ -1,0 +1,24 @@
+{
+  "name": "omnisync-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "generate": "nuxi generate",
+    "preview": "nuxi preview",
+    "postinstall": "nuxi prepare"
+  },
+  "dependencies": {
+    "nuxt": "^4.4.8",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.0.0",
+    "typescript": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "shadcn-vue": "^2.7.0"
+  }
+}
