@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nuxtjs",
+  "buildCommand": "npx nuxi build",
+  "installCommand": "npm install",
+  "outputDirectory": null,
+  "github": {
+    "silent": true
+  }
+}
