@@ -48,6 +48,11 @@ interface GenerateCvParams {
   name: string;
   email: string;
   bio: string;
+  phone?: string;
+  location?: string;
+  website?: string;
+  linkedin?: string;
+  job_title?: string;
   repos: RepoDetail[];
 }
 
@@ -102,6 +107,16 @@ export class AiService implements OnModuleInit {
       })
       .join('\n');
 
+    const profileLines: string[] = [`Nama: ${this.escapeUserContent(params.name)}`];
+    profileLines.push(`Email: ${this.escapeUserContent(params.email)}`);
+    if (params.phone) profileLines.push(`Telepon: ${this.escapeUserContent(params.phone)}`);
+    if (params.location) profileLines.push(`Lokasi: ${this.escapeUserContent(params.location)}`);
+    if (params.website) profileLines.push(`Website: ${this.escapeUserContent(params.website)}`);
+    if (params.linkedin) profileLines.push(`LinkedIn: ${this.escapeUserContent(params.linkedin)}`);
+    profileLines.push(`Posisi Target: ${params.job_title ? this.escapeUserContent(params.job_title) : 'Tidak ditentukan'}`);
+    if (params.bio) profileLines.push(`Bio: ${this.escapeUserContent(params.bio)}`);
+    const profileText = profileLines.join('\n');
+
     return `Anda adalah asisten penulis CV profesional ATS (Applicant Tracking System). Tugas Anda adalah membuat CV dalam Bahasa Indonesia formal dengan format yang dioptimalkan untuk ATS.
 
 GAYA PENULISAN:
@@ -129,9 +144,8 @@ CONTOH BULLET POINT BURUK:
 - "Bekerja sama dengan tim"
 
 BUAT CV UNTUK:
-Nama: ${this.escapeUserContent(params.name)}
-Email: ${this.escapeUserContent(params.email)}
-Bio: ${this.escapeUserContent(params.bio || '-')}
+DATA PRIBADI:
+${profileText}
 
 REPOSITORI GITHUB:
 ${repoText || '- (belum ada repositori)'}

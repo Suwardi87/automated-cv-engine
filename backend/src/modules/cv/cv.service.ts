@@ -6,6 +6,7 @@ import { GithubProject } from '../github/entities/github-project.entity';
 import { Education } from '../education/entities/education.entity';
 import { WorkExperience } from '../work-experience/entities/work-experience.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { Organization } from '../organization/entities/organization.entity';
 import { AiService, CvData } from '../../services/ai.service';
 
 @Injectable()
@@ -21,6 +22,8 @@ export class CvService {
     private workRepo: Repository<WorkExperience>,
     @InjectRepository(Certificate)
     private certRepo: Repository<Certificate>,
+    @InjectRepository(Organization)
+    private orgRepo: Repository<Organization>,
     private ai: AiService,
   ) {}
 
@@ -28,7 +31,7 @@ export class CvService {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-    const [repos, educations, workExperiences, certificates] = await Promise.all([
+    const [repos, educations, workExperiences, certificates, organizations] = await Promise.all([
       this.githubRepo.find({
         where: { user_id: userId },
         order: { last_pushed_at: 'DESC' },
@@ -45,12 +48,18 @@ export class CvService {
         where: { user_id: userId },
         order: { sort_order: 'ASC' },
       }),
+      this.orgRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
     ]);
 
     const cvData = await this.ai.generateCvContent({
       name: user.name,
       email: user.email,
       bio: user.bio,
+      phone: user.phone,
+      location: user.location,
+      website: user.website,
+      linkedin: user.linkedin,
+      job_title: user.job_title,
       repos: repos
         .sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
         .slice(0, 15)
@@ -85,6 +94,16 @@ export class CvService {
     }));
     if (expHighlights.length) {
       cvData.experiences = [...expHighlights, ...cvData.experiences].slice(0, 6);
+    }
+
+    const orgHighlights = organizations.map((o) => ({
+      role: o.role,
+      company: o.name,
+      period: [o.start_date, o.is_current ? 'Saat Ini' : o.end_date].filter(Boolean).join(' — '),
+      bullets: o.highlights?.length ? o.highlights : o.description ? [o.description] : [],
+    }));
+    if (orgHighlights.length) {
+      cvData.organizations = [...orgHighlights, ...cvData.organizations].slice(0, 4);
     }
 
     cvData.certificates = certificates.map((c) => `${c.name} — ${c.issuer}`);

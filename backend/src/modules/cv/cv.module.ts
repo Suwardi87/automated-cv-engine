@@ -8,9 +8,10 @@ import { GithubProject } from '../github/entities/github-project.entity';
 import { Education } from '../education/entities/education.entity';
 import { WorkExperience } from '../work-experience/entities/work-experience.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, GithubProject, Education, WorkExperience, Certificate])],
+  imports: [TypeOrmModule.forFeature([User, GithubProject, Education, WorkExperience, Certificate, Organization])],
   controllers: [CvController, DownloadCvController],
   providers: [CvService],
 })

@@ -18,6 +18,7 @@ import { CvModule } from './modules/cv/cv.module';
 import { EducationModule } from './modules/education/education.module';
 import { WorkExperienceModule } from './modules/work-experience/work-experience.module';
 import { CertificateModule } from './modules/certificate/certificate.module';
+import { OrganizationModule } from './modules/organization/organization.module';
 import { AiModule } from './modules/ai/ai.module';
 
 @Module({
@@ -61,6 +62,7 @@ import { AiModule } from './modules/ai/ai.module';
     WorkExperienceModule,
     EducationModule,
     CertificateModule,
+    OrganizationModule,
   ],
   controllers: [AppController],
 })

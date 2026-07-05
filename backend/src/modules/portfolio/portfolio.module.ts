@@ -9,9 +9,10 @@ import { MediaPortfolio } from '../social/entities/media-portfolio.entity';
 import { Education } from '../education/entities/education.entity';
 import { WorkExperience } from '../work-experience/entities/work-experience.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, GithubProject, GitlabProject, MediaPortfolio, Education, WorkExperience, Certificate])],
+  imports: [TypeOrmModule.forFeature([User, GithubProject, GitlabProject, MediaPortfolio, Education, WorkExperience, Certificate, Organization])],
   controllers: [PortfolioController],
   providers: [PortfolioService],
 })

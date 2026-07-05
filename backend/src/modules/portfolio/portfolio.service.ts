@@ -8,6 +8,7 @@ import { MediaPortfolio } from '../social/entities/media-portfolio.entity';
 import { Education } from '../education/entities/education.entity';
 import { WorkExperience } from '../work-experience/entities/work-experience.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Injectable()
 export class PortfolioService {
@@ -26,6 +27,8 @@ export class PortfolioService {
     private workRepo: Repository<WorkExperience>,
     @InjectRepository(Certificate)
     private certRepo: Repository<Certificate>,
+    @InjectRepository(Organization)
+    private orgRepo: Repository<Organization>,
   ) {}
 
   async findByUsername(username: string) {
@@ -34,7 +37,7 @@ export class PortfolioService {
       user = await this.userRepo.findOneBy({ name: username });
     }
     if (!user) return null;
-    const [github_projects, gitlab_projects, media_portfolios, educations, work_experiences, certificates] = await Promise.all([
+    const [github_projects, gitlab_projects, media_portfolios, educations, work_experiences, certificates, organizations] = await Promise.all([
       this.githubRepo.find({
         where: { user_id: user.id },
         order: { last_pushed_at: 'DESC' },
@@ -58,6 +61,10 @@ export class PortfolioService {
         where: { user_id: user.id },
         order: { sort_order: 'ASC' },
       }),
+      this.orgRepo.find({
+        where: { user_id: user.id },
+        order: { sort_order: 'ASC' },
+      }),
     ]);
     return {
       user: { name: user.name, bio: user.bio, avatar_url: user.avatar_url },
@@ -67,6 +74,7 @@ export class PortfolioService {
       educations,
       work_experiences,
       certificates,
+      organizations,
     };
   }
 }
