@@ -51,19 +51,23 @@ export class CvService {
       name: user.name,
       email: user.email,
       bio: user.bio,
-      repos: repos.map((r) => ({
-        title: r.title,
-        tech_stack: r.tech_stack,
-        ai_summary: r.ai_summary,
-        repo_url: r.repo_url,
-        live_url: r.live_url,
-        languages: r.languages,
-        topics: r.topics,
-        recent_commits: r.recent_commits,
-        stars_count: r.stars_count,
-        forks_count: r.forks_count,
-        is_fork: r.is_fork,
-      })),
+      repos: repos
+        .sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
+        .slice(0, 15)
+        .map((r) => ({
+          title: r.title,
+          is_featured: r.is_featured,
+          tech_stack: r.tech_stack,
+          ai_summary: r.ai_summary,
+          repo_url: r.repo_url,
+          live_url: r.live_url,
+          languages: r.languages,
+          topics: r.topics,
+          recent_commits: r.recent_commits,
+          stars_count: r.stars_count,
+          forks_count: r.forks_count,
+          is_fork: r.is_fork,
+        })),
     });
 
     cvData.education = educations.map((e) => ({
