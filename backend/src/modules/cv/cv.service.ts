@@ -87,4 +87,10 @@ export class CvService {
 
     return cvData;
   }
+
+  async generateByUsername(username: string): Promise<CvData> {
+    const user = await this.userRepo.findOneBy({ username });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return this.generate(user.id);
+  }
 }
