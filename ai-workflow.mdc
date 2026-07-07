@@ -1,0 +1,23 @@
+# AI Workflow Rules — WAJIB dipatuhi setiap sesi coding
+
+## Aturan Mutlak (AI WAJIB menjalankan, bukan menyuruh user)
+
+1. **COMMIT-FIRST:** Setelah selesai nulis kode, AI WAJIB menjalankan `./workflow-vibe-code.sh` — commit dulu, baru test. Jangan test dulu lalu commit.
+
+2. **EKSEKUSI, BUKAN INSTRUKSI:** AI sendiri yang menjalankan perintah verify di terminal, bukan hanya bilang "jalankan script ini" ke user.
+
+3. **JANGAN SKIP:** Walaupun perubahan "kecil" (fix typo, rename, satu baris), WAJIB tetap jalankan workflow.
+
+4. **REVERT SAAT GAGAL:** Kalau test gagal di wizard, pilih opsi **1 (Revert)** — commit dibatalkan, file tetap aman. Perbaiki error, jalankan ulang.
+
+5. **VERIFICATION TABLE:** Setiap selesai, output laporan dalam format tabel:
+   | Komponen | Status | Catatan |
+   |----------|--------|---------|
+   | **Lint & Typecheck** | ✅/❌ | ... |
+   | **Test** | ✅/❌ | ... |
+   | **Build** | ✅/❌ | ... |
+
+6. **SECURITY GUARDRAILS:**
+   - Jangan ubah `.env*`, `docker-compose*.yml`, `package.json`, `workflow-vibe-code.sh` tanpa izin eksplisit
+   - Jangan kurangi middleware keamanan (JWT, rate limit, CORS, sanitasi input)
+   - Jangan hapus komentar/docstring yang sudah ada

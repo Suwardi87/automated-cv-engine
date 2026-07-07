@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# pre-push hook — PROTECT branch terlindungi via config.env
+# ==============================================================================
+
+PROTECTED_BRANCHES="main master production"
+
+if [ -f config.local.env ]; then
+    VAL=$(bash -c "set -a; source config.local.env; set +a; printf '%s' \"\${PROTECTED_BRANCHES:-}\"" 2>/dev/null)
+    [ -n "$VAL" ] && PROTECTED_BRANCHES="$VAL"
+elif [ -f config.env ]; then
+    VAL=$(bash -c "set -a; source config.env; set +a; printf '%s' \"\${PROTECTED_BRANCHES:-}\"" 2>/dev/null)
+    [ -n "$VAL" ] && PROTECTED_BRANCHES="$VAL"
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    branch=$(echo "$remote_ref" | sed 's|^refs/heads/||')
+    for protected in $PROTECTED_BRANCHES; do
+        if [ "$branch" = "$protected" ]; then
+            if [ "${ALLOW_PROTECTED_PUSH:-}" = "1" ]; then
+                echo -e "\033[0;32m✅ [pre-push] Push ke '$branch' diizinkan (ALLOW_PROTECTED_PUSH=1).\033[0m"
+            else
+                echo -e "\033[0;31m❌ [pre-push] Branch '$branch' dilindungi. Gunakan ALLOW_PROTECTED_PUSH=1\033[0m"
+                exit 1
+            fi
+        fi
+    done
+done
+
+exit 0

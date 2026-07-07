@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: omnisync
       POSTGRES_PASSWORD: omnisync_secret
     ports:
-      - "5432:5432"
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: omnisync-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -31,28 +31,14 @@ services:
       timeout: 3s
       retries: 5
 
-  laravel-api:
+  nestjs-api:
     build:
-      context: .
-      dockerfile: Dockerfile.laravel
-    container_name: omnisync-laravel
+      context: ./backend
+      dockerfile: ../Dockerfile.nestjs.dev
+    container_name: omnisync-nestjs
     restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./backend:/var/www
-      - ./storage-laravel:/var/www/storage
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_DATABASE: omnisync
-      DB_USERNAME: omnisync
-      DB_PASSWORD: omnisync_secret
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8080
+    env_file:
+      - ./backend/.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,65 +46,74 @@ services:
         condition: service_healthy
     expose:
       - "9000"
-
-  laravel-queue:
-    build:
-      context: .
-      dockerfile: Dockerfile.laravel
-    container_name: omnisync-queue
-    restart: unless-stopped
-    working_dir: /var/www
     volumes:
-      - ./backend:/var/www
-      - ./storage-laravel:/var/www/storage
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_DATABASE: omnisync
-      DB_USERNAME: omnisync
-      DB_PASSWORD: omnisync_secret
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      APP_ENV: local
-      APP_DEBUG: "true"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=300
+      - ./backend:/app
+      - nestjs_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   nginx:
     image: nginx:alpine
     container_name: omnisync-nginx
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8082:80"
     volumes:
-      - ./backend:/var/www
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - laravel-api
+      - nestjs-api
+      - nuxt-public
+      - nuxt-cms
 
-  nuxt-frontend:
+  nuxt-public:
     build:
       context: .
-      dockerfile: Dockerfile.nuxt
-    container_name: omnisync-nuxt
+      dockerfile: Dockerfile.nuxt.public
+    container_name: omnisync-nuxt-public
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend-public:/app
+      - nuxt_public_modules:/app/node_modules
+      - nuxt_public_nuxt:/app/.nuxt
     environment:
-      NUXT_PUBLIC_API_BASE: http://localhost:8080/api
+      NUXT_PUBLIC_API_BASE: http://localhost:8082/api
+      NUXT_API_BASE_SSR: http://nestjs-api:9000/api
       NUXT_HOST: 0.0.0.0
       NUXT_PORT: 3000
     depends_on:
-      - laravel-api
+      - nestjs-api
+
+  nuxt-cms:
+    build:
+      context: .
+      dockerfile: Dockerfile.nuxt.cms
+    container_name: omnisync-nuxt-cms
+    restart: unless-stopped
+    expose:
+      - "3001"
+    volumes:
+      - ./frontend-cms:/app
+      - nuxt_cms_modules:/app/node_modules
+      - nuxt_cms_nuxt:/app/.nuxt
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:8082/api
+      NUXT_API_BASE_SSR: http://nestjs-api:9000/api
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3001
+    depends_on:
+      - nestjs-api
 
 volumes:
   postgres_data:
   redis_data:
+  nestjs_modules:
+  nuxt_public_modules:
+  nuxt_public_nuxt:
+  nuxt_cms_modules:
+  nuxt_cms_nuxt:

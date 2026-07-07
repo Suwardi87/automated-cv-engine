@@ -1,0 +1,11 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "instructions": [
+        "ai-workflow.mdc",
+        "AGENTS.md",
+        "PRODUCT.md",
+        "WORKFLOW.md",
+        "STYLE_GUIDE.md",
+        "ROADMAP.md"
+    ]
+}

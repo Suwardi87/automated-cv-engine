@@ -1,0 +1,62 @@
+#!/bin/bash
+# ==============================================================================
+# pre-commit hook — GATE: typecheck via Docker container
+# Commit DITOLAK jika ada error.
+# ==============================================================================
+
+set -e
+
+echo -e "\033[0;34m🔍 [pre-commit] Menjalankan typecheck via Docker...\033[0m"
+
+HAS_ERROR=false
+
+# Cek Docker compose tersedia
+if ! command -v docker &>/dev/null; then
+    echo -e "\033[0;33m⚠️  docker tidak ditemukan. Skip pre-commit check.\033[0m"
+    exit 0
+fi
+
+# Periksa apakah container running
+NUXT_RUNNING=false
+NEST_RUNNING=false
+if docker compose ps --status running 2>&1 | grep -q "nuxt"; then
+    NUXT_RUNNING=true
+fi
+if docker compose ps --status running 2>&1 | grep -q "nestjs"; then
+    NEST_RUNNING=true
+fi
+
+# Frontend typecheck via Nuxt container
+if [ "$NUXT_RUNNING" = "true" ]; then
+    echo -e "\033[0;34m   → Nuxt typecheck (via Docker)...\033[0m"
+    if docker compose exec -T nuxt-public npx nuxi typecheck 2>&1; then
+        echo -e "\033[0;32m   ✓ Nuxt typecheck OK\033[0m"
+    else
+        echo -e "\033[0;31m   ❌ Nuxt typecheck gagal\033[0m"
+        HAS_ERROR=true
+    fi
+else
+    echo -e "\033[0;33m   ⚠️  Nuxt container tidak running — skip typecheck\033[0m"
+fi
+
+# Backend build check via NestJS container
+if [ "$NEST_RUNNING" = "true" ]; then
+    echo -e "\033[0;34m   → NestJS build (via Docker)...\033[0m"
+    if docker compose exec -T nestjs-api npx nest build 2>&1; then
+        echo -e "\033[0;32m   ✓ NestJS build OK\033[0m"
+    else
+        echo -e "\033[0;31m   ❌ NestJS build gagal\033[0m"
+        HAS_ERROR=true
+    fi
+else
+    echo -e "\033[0;33m   ⚠️  NestJS container tidak running — skip build check\033[0m"
+fi
+
+if [ "$HAS_ERROR" = "true" ]; then
+    echo -e "\033[0;33m   Perbaiki error di atas, lalu commit ulang.\033[0m"
+    echo -e "\033[0;33m   (bypass darurat: git commit --no-verify)\033[0m"
+    exit 1
+fi
+
+echo -e "\033[0;32m✅ Semua pengecekan bersih. Commit diizinkan.\033[0m"
+exit 0

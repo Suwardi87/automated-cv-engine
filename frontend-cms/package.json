@@ -1,0 +1,29 @@
+{
+  "name": "omnisync-cms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "generate": "nuxi generate",
+    "preview": "nuxi preview",
+    "postinstall": "nuxi prepare"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "nuxt": "^4.4.8",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.0.0",
+    "@types/node": "^26.0.0",
+    "typescript": "^5.0.0",
+    "vue-tsc": "^3.3.5"
+  },
+  "optionalDependencies": {
+    "shadcn-vue": "^2.7.0"
+  }
+}
