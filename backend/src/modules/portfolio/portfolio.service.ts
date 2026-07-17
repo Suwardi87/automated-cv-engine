@@ -41,7 +41,7 @@ export class PortfolioService {
       this.githubRepo.find({
         where: { user_id: user.id },
         order: { last_pushed_at: 'DESC' },
-        select: ['id', 'title', 'slug', 'ai_summary', 'tech_stack', 'repo_url', 'live_url', 'primary_language', 'stars_count', 'forks_count', 'is_featured', 'last_pushed_at'],
+        select: ['id', 'title', 'slug', 'ai_summary', 'tech_stack', 'repo_url', 'live_url', 'screenshot_url', 'primary_language', 'stars_count', 'forks_count', 'is_featured', 'last_pushed_at'],
       }),
       this.gitlabRepo.find({
         where: { user_id: user.id },

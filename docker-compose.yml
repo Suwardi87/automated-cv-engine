@@ -1,36 +1,4 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: omnisync-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: omnisync
-      POSTGRES_USER: omnisync
-      POSTGRES_PASSWORD: omnisync_secret
-    ports:
-      - "5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U omnisync"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: omnisync-redis
-    restart: unless-stopped
-    ports:
-      - "6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   nestjs-api:
     build:
       context: ./backend
@@ -39,11 +7,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     expose:
       - "9000"
     volumes:
@@ -55,6 +18,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    networks:
+      - dev_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
 
   nginx:
     image: nginx:alpine
@@ -68,6 +38,13 @@ services:
       - nestjs-api
       - nuxt-public
       - nuxt-cms
+    networks:
+      - dev_network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    profiles: [omnisync]
 
   nuxt-public:
     build:
@@ -88,6 +65,13 @@ services:
       NUXT_PORT: 3000
     depends_on:
       - nestjs-api
+    networks:
+      - dev_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
 
   nuxt-cms:
     build:
@@ -108,12 +92,21 @@ services:
       NUXT_PORT: 3001
     depends_on:
       - nestjs-api
+    networks:
+      - dev_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
 
 volumes:
-  postgres_data:
-  redis_data:
   nestjs_modules:
   nuxt_public_modules:
   nuxt_public_nuxt:
   nuxt_cms_modules:
   nuxt_cms_nuxt:
+
+networks:
+  dev_network:
+    external: true

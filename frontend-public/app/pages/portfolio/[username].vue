@@ -5,6 +5,7 @@ interface Project {
   slug: string
   repo_url: string
   live_url: string | null
+  screenshot_url: string | null
   primary_language: string
   tech_stack: string[]
   ai_summary: string | null
@@ -70,6 +71,11 @@ useSeoMeta({
   ogImage: () => portfolio.value?.user.avatar_url || '',
   twitterCard: 'summary_large_image'
 })
+
+function fmtDate(d: string | null): string {
+  if (!d) return ''
+  return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
+}
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr)
@@ -164,16 +170,65 @@ function formatTime(dateStr: string): string {
           </div>
 
           <div v-else class="grid gap-6 md:grid-cols-2">
-            <article 
-              v-for="project in portfolio.github_projects" 
-              :key="project.id" 
-              class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-900/30 p-6 transition-all hover:-translate-y-1 hover:border-zinc-800 hover:bg-zinc-900/60"
+            <article
+              v-for="project in portfolio.github_projects"
+              :key="project.id"
+              class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-900/30 transition-all hover:-translate-y-1 hover:border-zinc-800 hover:bg-zinc-900/60"
             >
               <!-- Card Background Glow on Hover -->
               <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 
-              <div class="relative">
-                <!-- Title & Badge -->
+              <!-- Preview Screenshot -->
+              <div class="relative aspect-video overflow-hidden border-b border-zinc-900 bg-zinc-950">
+                <a
+                  v-if="project.live_url"
+                  :href="project.live_url"
+                  target="_blank"
+                  rel="noopener"
+                  class="block h-full w-full"
+                  :title="`Buka ${project.title} live`"
+                >
+                  <img
+                    v-if="project.screenshot_url"
+                    :src="project.screenshot_url"
+                    :alt="`Preview ${project.title}`"
+                    class="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-900/20 to-zinc-900">
+                    <svg class="h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                  </div>
+                  <div class="absolute inset-0 flex items-center justify-center bg-zinc-950/0 transition-colors group-hover:bg-zinc-950/40">
+                    <span class="flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-xs font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      Lihat Live Preview
+                    </span>
+                  </div>
+                </a>
+                <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-900/20 to-zinc-900">
+                  <svg class="h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </div>
+                <span
+                  v-if="project.is_featured"
+                  class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[9px] font-bold text-amber-300 backdrop-blur-sm"
+                >
+                  UNGGULAN
+                </span>
+                <span
+                  v-if="project.live_url"
+                  class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[9px] font-bold text-emerald-300 backdrop-blur-sm"
+                >
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  LIVE
+                </span>
+              </div>
+
+              <div class="relative flex flex-1 flex-col p-6">
+                <!-- Title -->
                 <div class="mb-3 flex items-start justify-between gap-2">
                   <a :href="project.repo_url" target="_blank" class="flex items-center gap-2 text-base font-semibold text-zinc-100 hover:text-violet-400 transition-colors">
                     {{ project.title }}
@@ -181,9 +236,6 @@ function formatTime(dateStr: string): string {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   </a>
-                  <span v-if="project.is_featured" class="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[9px] font-bold text-amber-300">
-                    UNGGULAN
-                  </span>
                 </div>
 
                 <!-- Description / AI Summary -->
@@ -202,31 +254,31 @@ function formatTime(dateStr: string): string {
 
                 <!-- Tech Stack Badges -->
                 <div class="mb-6 flex flex-wrap gap-1.5">
-                  <span 
-                    v-for="tech in project.tech_stack" 
+                  <span
+                    v-for="tech in project.tech_stack"
                     :key="tech"
                     class="rounded-lg bg-zinc-900 border border-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400"
                   >
                     {{ tech }}
                   </span>
                 </div>
-              </div>
 
-              <!-- Footer Statistics -->
-              <div class="relative flex items-center justify-between border-t border-zinc-900 pt-4 text-xs text-zinc-500">
-                <div class="flex items-center gap-4">
-                  <span v-if="project.primary_language" class="flex items-center gap-1.5">
-                    <span class="h-2 w-2 rounded-full bg-violet-400"></span>
-                    {{ project.primary_language }}
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                    {{ project.stars_count }}
-                  </span>
+                <!-- Footer Statistics -->
+                <div class="mt-auto flex items-center justify-between border-t border-zinc-900 pt-4 text-xs text-zinc-500">
+                  <div class="flex items-center gap-4">
+                    <span v-if="project.primary_language" class="flex items-center gap-1.5">
+                      <span class="h-2 w-2 rounded-full bg-violet-400"></span>
+                      {{ project.primary_language }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      {{ project.stars_count }}
+                    </span>
+                  </div>
+                  <span>Update {{ formatTime(project.last_pushed_at) }}</span>
                 </div>
-                <span>Update {{ formatTime(project.last_pushed_at) }}</span>
               </div>
             </article>
           </div>
@@ -242,9 +294,9 @@ function formatTime(dateStr: string): string {
           </div>
           <div class="grid gap-4 md:grid-cols-2">
             <div v-for="edu in portfolio.educations" :key="edu.id" class="rounded-2xl border border-zinc-900 bg-zinc-900/30 p-6">
-              <p class="text-xs font-semibold text-violet-400 uppercase tracking-wider">{{ edu.degree }}{{ edu.field_of_study ? ` - ${edu.field_of_study}` : '' }}</p>
+              <p class="text-xs font-semibold text-violet-400 uppercase tracking-wider">{{ edu.degree }}{{ edu.field_of_study ? ` — ${edu.field_of_study}` : '' }}</p>
               <p class="mt-1 text-base font-bold text-white">{{ edu.institution }}</p>
-              <p class="mt-1 text-xs text-zinc-500">{{ [edu.start_date, edu.end_date].filter(Boolean).join(' — ') || '-' }}</p>
+              <p class="mt-1 text-xs text-zinc-500">{{ fmtDate(edu.start_date) }}{{ edu.end_date ? ' — ' + fmtDate(edu.end_date) : ' — Sekarang' }}</p>
               <p v-if="edu.description" class="mt-3 text-xs leading-relaxed text-zinc-400">{{ edu.description }}</p>
             </div>
           </div>
@@ -267,7 +319,7 @@ function formatTime(dateStr: string): string {
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span v-if="exp.is_current" class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[9px] font-bold text-emerald-300">SAAT INI</span>
-                  <span class="text-xs text-zinc-500">{{ [exp.start_date, exp.is_current ? 'Sekarang' : exp.end_date].filter(Boolean).join(' — ') }}</span>
+                  <span class="text-xs text-zinc-500">{{ fmtDate(exp.start_date) }}{{ exp.is_current ? ' — Sekarang' : exp.end_date ? ' — ' + fmtDate(exp.end_date) : '' }}</span>
                 </div>
               </div>
               <p v-if="exp.description" class="mt-3 text-xs leading-relaxed text-zinc-400">{{ exp.description }}</p>

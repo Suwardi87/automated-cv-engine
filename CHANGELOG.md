@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.3.0] - 2026-07-17
+- feat(github): tambah screenshot otomatis project via puppeteer + thumbnail preview di portfolio
+
 ## [0.2.0] - 2026-07-05
 - feat: tambah modul CRUD Education
 

@@ -560,6 +560,28 @@ Output JSON valid. JANGAN tambahkan apapun di luar JSON.`;
     return description.replace(/[^\w\s.-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
   }
 
+  async improveText(text: string, context: string = 'deskripsi profesional'): Promise<string> {
+    if (!this.model) return text;
+    try {
+      const prompt = `Kamu adalah asisten penulisan profesional. Parafrase teks berikut agar lebih profesional, ATS-friendly, dan mudah dibaca. 
+Konteks: ${context}
+Aturan:
+- Gunakan Bahasa Indonesia formal
+- Buat 2-3 kalimat maksimal
+- Prioritaskan kata kerja aktif dan hasil konkret
+- Jangan tambahkan informasi yang tidak ada di teks asli
+- Jangan gunakan kata klise ("bekerja keras", "bertanggung jawab")
+
+Teks asli: "${text}"
+
+Berikan hanya hasil parafrase, tanpa penjelasan atau markdown:`;
+      const result = await this.model.generateContent(prompt);
+      return result.response.text().trim().replace(/^["']|["']$/g, '');
+    } catch {
+      return text;
+    }
+  }
+
   async summarizeReadme(raw: string): Promise<string | null> {
     if (!this.model || !raw) return null;
     const prompt = `Summarize the following GitHub README in 2-3 sentences in Bahasa Indonesia. Focus on: what the project does, key technologies used, and main features. Keep it factual and concise.

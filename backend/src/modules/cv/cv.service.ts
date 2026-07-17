@@ -7,7 +7,7 @@ import { Education } from '../education/entities/education.entity';
 import { WorkExperience } from '../work-experience/entities/work-experience.entity';
 import { Certificate } from '../certificate/entities/certificate.entity';
 import { Organization } from '../organization/entities/organization.entity';
-import { AiService, CvData } from '../../services/ai.service';
+import { CvData } from '../../services/ai.service';
 
 @Injectable()
 export class CvService {
@@ -24,91 +24,106 @@ export class CvService {
     private certRepo: Repository<Certificate>,
     @InjectRepository(Organization)
     private orgRepo: Repository<Organization>,
-    private ai: AiService,
   ) {}
+
+  private fmtDate(d: string | null, isCurrent = false): string {
+    if (isCurrent) return 'Sekarang';
+    if (!d) return '';
+    try {
+      return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
+    } catch {
+      return '';
+    }
+  }
+
+  private fmtPeriod(start?: string | null, end?: string | null, isCurrent?: boolean): string {
+    return [this.fmtDate(start ?? null), this.fmtDate(end ?? null, isCurrent)].filter(Boolean).join(' — ');
+  }
 
   async generate(userId: number): Promise<CvData> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const [repos, educations, workExperiences, certificates, organizations] = await Promise.all([
-      this.githubRepo.find({
-        where: { user_id: userId },
-        order: { last_pushed_at: 'DESC' },
-      }),
-      this.educationRepo.find({
-        where: { user_id: userId },
-        order: { sort_order: 'ASC' },
-      }),
-      this.workRepo.find({
-        where: { user_id: userId },
-        order: { sort_order: 'ASC' },
-      }),
-      this.certRepo.find({
-        where: { user_id: userId },
-        order: { sort_order: 'ASC' },
-      }),
+      this.githubRepo.find({ where: { user_id: userId }, order: { last_pushed_at: 'DESC' } }),
+      this.educationRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
+      this.workRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
+      this.certRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
       this.orgRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
     ]);
 
-    const cvData = await this.ai.generateCvContent({
-      name: user.name,
-      email: user.email,
-      bio: user.bio,
-      phone: user.phone,
-      location: user.location,
-      website: user.website,
-      linkedin: user.linkedin,
-      job_title: user.job_title,
-      repos: repos
-        .sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
-        .slice(0, 15)
-        .map((r) => ({
-          title: r.title,
-          is_featured: r.is_featured,
-          tech_stack: r.tech_stack,
-          ai_summary: r.ai_summary,
-          repo_url: r.repo_url,
-          live_url: r.live_url,
-          languages: r.languages,
-          topics: r.topics,
-          recent_commits: r.recent_commits,
-          stars_count: r.stars_count,
-          forks_count: r.forks_count,
-          is_fork: r.is_fork,
-        })),
+    const exclude = /^(swift|lua|objective-c|cmake|c\+\+|dart-generated|llvm|assembly|c$|plpgsql|hack|less|go template|kotlin|dockerfile|scss)$/i;
+    const techSet = new Set<string>();
+    repos.forEach((r) => {
+      [...(r.tech_stack || []), ...(r.topics || []), r.primary_language].forEach((t) => {
+        if (t && !exclude.test(t.trim())) techSet.add(t.trim());
+      });
     });
 
-    cvData.education = educations.map((e) => ({
-      degree: `${e.degree}${e.field_of_study ? ` - ${e.field_of_study}` : ''}`,
-      school: e.institution,
-      period: [e.start_date, e.end_date].filter(Boolean).join(' — ') || '-',
-      note: e.description || '',
-    }));
+    const priority = /^(vue|react|next|nuxt|angular|svelte|php|laravel|go|node|typescript|javascript|python|dart|flutter|kotlin|java|mysql|postgresql|mongodb|redis|docker|kubernetes|aws|nginx|tailwind|bootstrap|express|nestjs|django|flask|spring|blade)/i;
+    const sortedTech = [...techSet].sort((a, b) => {
+      const aP = priority.test(a) ? 0 : 1;
+      const bP = priority.test(b) ? 0 : 1;
+      return aP - bP;
+    });
 
-    const expHighlights = workExperiences.map((w) => ({
-      role: w.position,
-      company: w.company,
-      period: [w.start_date, w.is_current ? 'Saat Ini' : w.end_date].filter(Boolean).join(' — '),
-      bullets: w.highlights?.length ? w.highlights : w.description ? [w.description] : [],
-    }));
-    if (expHighlights.length) {
-      cvData.experiences = [...expHighlights, ...cvData.experiences].slice(0, 6);
-    }
+    const featuredRepos = repos
+      .filter((r) => r.is_featured)
+      .sort((a, b) => (b.stars_count || 0) - (a.stars_count || 0));
 
-    const orgHighlights = organizations.map((o) => ({
-      role: o.role,
-      company: o.name,
-      period: [o.start_date, o.is_current ? 'Saat Ini' : o.end_date].filter(Boolean).join(' — '),
-      bullets: o.highlights?.length ? o.highlights : o.description ? [o.description] : [],
-    }));
-    if (orgHighlights.length) {
-      cvData.organizations = [...orgHighlights, ...cvData.organizations].slice(0, 4);
-    }
+    const allRepos = [...featuredRepos, ...repos.filter((r) => !r.is_featured)];
 
-    cvData.certificates = certificates.map((c) => `${c.name} — ${c.issuer}`);
+    const profileLinks = [
+      user.website,
+      user.linkedin,
+      `GitHub: github.com/${user.username}`,
+    ].filter(Boolean).join(' | ');
 
-    return cvData;
+    return {
+      profil: user.bio || `${user.name} — ${user.job_title || 'Developer'}`,
+      technicalSkills: sortedTech.length > 0
+        ? sortedTech.slice(0, 20)
+        : ['PHP', 'JavaScript', 'Laravel', 'Vue.js'],
+      softSkills: [
+        'Problem Solving & Analytical Thinking',
+        'Adaptability & Fast Learning',
+        'Team Collaboration & Communication',
+        'Time Management & Prioritization',
+      ],
+      experiences: workExperiences.map((w) => ({
+        role: w.position,
+        company: w.company,
+        period: this.fmtPeriod(w.start_date, w.end_date, w.is_current),
+        bullets: [
+          ...(w.highlights || []),
+          ...(w.description ? [w.description] : []),
+        ],
+      })),
+      education: educations.map((e) => ({
+        degree: `${e.degree}${e.field_of_study ? ` — ${e.field_of_study}` : ''}`,
+        school: e.institution,
+        period: this.fmtPeriod(e.start_date, e.end_date),
+        note: e.description || '',
+      })),
+      organizations: organizations.map((o) => ({
+        role: o.role,
+        company: o.name,
+        period: this.fmtPeriod(o.start_date, o.end_date, o.is_current),
+        bullets: [
+          ...(o.highlights || []),
+          ...(o.description ? [o.description] : []),
+        ],
+      })),
+      certificates: certificates.map((c) =>
+        `${c.name} — ${c.issuer} (${this.fmtDate(c.issue_date)})`,
+      ),
+      portfolioLinks: allRepos.slice(0, 7).map((r) => {
+        const feat = r.is_featured ? '★ ' : '';
+        const stack = (r.tech_stack || []).filter((t) => !exclude.test(t)).slice(0, 4).join(', ');
+        const summary = r.ai_summary ? `: ${r.ai_summary.slice(0, 100)}` : '';
+        return `${feat}${r.title} (${stack})${summary} — ${r.repo_url}`;
+      }).join('\n'),
+    };
   }
 
   async generateByUsername(username: string): Promise<CvData> {

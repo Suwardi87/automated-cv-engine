@@ -161,13 +161,20 @@
                     </div>
                   </div>
                   <div>
-                    <label class="mb-1.5 block text-xs font-medium text-zinc-400">Deskripsi</label>
-                    <textarea
-                      v-model="form.description"
-                      rows="3"
-                      class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-2.5 text-sm leading-relaxed text-zinc-200 outline-none transition-all placeholder:text-zinc-600 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10"
-                      placeholder="GPA, prestasi, organisasi..."
-                    ></textarea>
+                    <div class="mb-1.5 flex items-center justify-between">
+                      <label class="block text-xs font-medium text-zinc-400">Deskripsi</label>
+                      <button
+                        type="button"
+                        @click="handleImprove('description')"
+                        :disabled="improving === 'description'"
+                        class="flex items-center gap-1 rounded-lg border border-violet-800/40 bg-violet-950/30 px-2.5 py-1 text-[10px] font-medium text-violet-400 transition-all hover:border-violet-600/50 hover:bg-violet-950/50 disabled:opacity-50"
+                      >
+                        <svg v-if="improving === 'description'" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <svg v-else class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        Improve with AI
+                      </button>
+                    </div>
+                    <RichTextEditor v-model="form.description" placeholder="GPA, prestasi, organisasi..." />
                   </div>
                 </div>
                 <div class="flex items-center justify-end gap-3 border-t border-zinc-800/60 pt-4">
@@ -244,6 +251,7 @@ const showDeleteModal = ref(false)
 const editingId = ref<number | null>(null)
 const deleteTarget = ref<EducationItem | null>(null)
 const notifications = ref<Notification[]>([])
+const improving = ref<string | null>(null)
 
 const form = reactive({
   institution: '',
@@ -282,8 +290,8 @@ function openEditModal(item: EducationItem) {
   form.institution = item.institution
   form.degree = item.degree
   form.field_of_study = item.field_of_study ?? ''
-  form.start_date = item.start_date ?? ''
-  form.end_date = item.end_date ?? ''
+  form.start_date = item.start_date ? item.start_date.slice(0, 10) : ''
+  form.end_date = item.end_date ? item.end_date.slice(0, 10) : ''
   form.description = item.description ?? ''
   showModal.value = true
 }
@@ -316,8 +324,8 @@ async function handleSave() {
       end_date: form.end_date || null,
       description: form.description || null,
       sort_order: editingId.value
-        ? (items.value.find(i => i.id === editingId.value)?.sort_order ?? items.value.length + 1)
-        : items.value.length + 1,
+        ? (items.value.find(i => i.id === editingId.value)?.sort_order ?? Math.max(...items.value.map(i => i.sort_order), 0) + 1)
+        : Math.max(...items.value.map(i => i.sort_order), 0) + 1,
     }
     if (editingId.value) {
       await api.put(`/education/${editingId.value}`, payload)
@@ -386,9 +394,29 @@ async function moveDown(index: number) {
   }
 }
 
+async function handleImprove(field: string) {
+  improving.value = field
+  try {
+    const text = form[field as keyof typeof form] as string
+    if (!text.trim()) return
+    const res = await api.post<{ success: boolean; data: { improved: string } }>('/ai/improve', {
+      text,
+      context: 'deskripsi pendidikan - institusi, gelar, dan bidang studi',
+    })
+    if (res?.data?.improved) {
+      form[field as keyof typeof form] = res.data.improved as never
+      showToast('Teks ditingkatkan dengan AI')
+    }
+  } catch {
+    showToast('Gagal meningkatkan teks', 'error')
+  } finally {
+    improving.value = null
+  }
+}
+
 function formatDate(date: string) {
   if (!date) return ''
-  return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
+  return new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })
 }
 
 onMounted(fetchData)

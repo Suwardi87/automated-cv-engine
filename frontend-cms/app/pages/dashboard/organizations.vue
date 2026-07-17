@@ -158,23 +158,37 @@
           </div>
 
           <div>
-            <label class="mb-1.5 block text-xs font-medium text-zinc-400">Deskripsi</label>
-            <textarea
-              v-model="form.description"
-              rows="3"
-              placeholder="Deskripsikan peran dan kontribusi Anda di organisasi ini..."
-              class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-2.5 text-sm leading-relaxed text-zinc-200 outline-none transition-all focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10 placeholder:text-zinc-700"
-            ></textarea>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label class="block text-xs font-medium text-zinc-400">Deskripsi</label>
+              <button
+                type="button"
+                @click="handleImprove('description')"
+                :disabled="improving === 'description'"
+                class="flex items-center gap-1 rounded-lg border border-violet-800/40 bg-violet-950/30 px-2.5 py-1 text-[10px] font-medium text-violet-400 transition-all hover:border-violet-600/50 hover:bg-violet-950/50 disabled:opacity-50"
+              >
+                <svg v-if="improving === 'description'" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <svg v-else class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                Improve with AI
+              </button>
+            </div>
+            <RichTextEditor v-model="form.description" placeholder="Deskripsikan peran dan kontribusi Anda di organisasi ini..." />
           </div>
 
           <div>
-            <label class="mb-1.5 block text-xs font-medium text-zinc-400">Pencapaian/Kegiatan</label>
-            <textarea
-              v-model="form.highlights"
-              rows="4"
-              placeholder="Tulis poin pencapaian atau kegiatan (satu per baris)&#10;contoh:&#10;Menyelenggarakan pelatihan coding untuk 100+ mahasiswa&#10;Memimpin tim panitia 15 orang&#10;Meningkatkan keanggotaan bidang sebesar 50%"
-              class="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-2.5 text-sm leading-relaxed text-zinc-200 outline-none transition-all focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10 placeholder:text-zinc-700"
-            ></textarea>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label class="block text-xs font-medium text-zinc-400">Pencapaian/Kegiatan</label>
+              <button
+                type="button"
+                @click="handleImprove('highlights')"
+                :disabled="improving === 'highlights'"
+                class="flex items-center gap-1 rounded-lg border border-violet-800/40 bg-violet-950/30 px-2.5 py-1 text-[10px] font-medium text-violet-400 transition-all hover:border-violet-600/50 hover:bg-violet-950/50 disabled:opacity-50"
+              >
+                <svg v-if="improving === 'highlights'" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <svg v-else class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                Improve with AI
+              </button>
+            </div>
+            <RichTextEditor v-model="form.highlights" placeholder="Tulis poin pencapaian atau kegiatan (satu per baris)" />
           </div>
         </div>
 
@@ -261,6 +275,7 @@ const editingId = ref<number | null>(null)
 const deletingItem = ref<Organization | null>(null)
 const saving = ref(false)
 const deleting = ref(false)
+const improving = ref<string | null>(null)
 
 const form = reactive({
   name: '',
@@ -271,6 +286,24 @@ const form = reactive({
   description: '',
   highlights: '',
 })
+
+async function handleImprove(field: string) {
+  improving.value = field
+  try {
+    const text = form[field as keyof typeof form] as string
+    if (!text.trim()) return
+    const res = await api.post<{ success: boolean; data: { improved: string } }>('/ai/improve', {
+      text,
+      context: field === 'description' ? 'deskripsi pengalaman organisasi' : 'pencapaian dan kontribusi di organisasi',
+    })
+    if (res?.data?.improved) {
+      form[field as keyof typeof form] = res.data.improved as never
+    }
+  } catch {
+  } finally {
+    improving.value = null
+  }
+}
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return ''

@@ -41,6 +41,17 @@ export class GithubService {
     return this.repo.find({ where: { user_id: userId }, order: { last_pushed_at: 'DESC' } });
   }
 
+  findOne(id: number, userId: number) {
+    return this.repo.findOneByOrFail({ id, user_id: userId });
+  }
+
+  findAllWithLiveUrl(userId: number) {
+    return this.repo.find({
+      where: { user_id: userId },
+      order: { is_featured: 'DESC', last_pushed_at: 'DESC' },
+    });
+  }
+
   async sync(user: User) {
     const accessToken = await this.auth.getAccessToken(user.id, 'github');
     if (!accessToken) {
@@ -194,6 +205,50 @@ export class GithubService {
     } catch {
       return [];
     }
+  }
+
+  async getAggregatedSkills(userId: number) {
+    const projects = await this.repo.find({
+      where: { user_id: userId },
+      select: ['tech_stack', 'topics', 'languages', 'primary_language'],
+    });
+
+    const exclude = new Set([
+      'swift', 'lua', 'objective-c', 'cmake', 'c', 'c++',
+      'dart-generated', 'llvm', 'assembly', 'kotlin',
+    ]);
+
+    const langCategories: Record<string, string> = {
+      javascript: 'language', typescript: 'language', python: 'language', go: 'language',
+      rust: 'language', kotlin: 'language', java: 'language', 'c++': 'language',
+      'c#': 'language', php: 'language', ruby: 'language', swift: 'language',
+      dart: 'language', scala: 'language', lua: 'language', perl: 'language',
+    };
+
+    const count = new Map<string, { count: number; category: string }>();
+
+    for (const p of projects) {
+      const all = [
+        ...(p.tech_stack ?? []),
+        ...(p.topics ?? []),
+        ...(p.primary_language ? [p.primary_language] : []),
+        ...Object.keys(p.languages ?? {}),
+      ];
+
+      for (const name of [...new Set(all)]) {
+        if (!name || exclude.has(name.toLowerCase())) continue;
+        const existing = count.get(name) ?? { count: 0, category: 'tool' };
+        existing.count += 1;
+        if (langCategories[name.toLowerCase()]) existing.category = 'language';
+        else if (['react','vue','angular','svelte','next.js','nuxt','express','nestjs','fastify','django','flask','spring','rails','laravel','tailwind','bootstrap','jquery','flutter','react native','electron','prisma','typeorm','drizzle','mongoose','sequelize'].includes(name.toLowerCase())) existing.category = 'framework';
+        else if (['postgresql','mysql','mongodb','redis','sqlite','mariadb','cassandra','dynamodb','firebase','supabase','elasticsearch'].includes(name.toLowerCase())) existing.category = 'database';
+        count.set(name, existing);
+      }
+    }
+
+    return [...count.entries()]
+      .map(([name, meta]) => ({ name, count: meta.count, category: meta.category }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }
 
   async toggleFeature(id: number, userId: number) {

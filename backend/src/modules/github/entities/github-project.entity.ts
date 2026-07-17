@@ -45,6 +45,9 @@ export class GithubProject {
   @Column({ length: 255, nullable: true })
   live_url: string;
 
+  @Column({ length: 500, nullable: true })
+  screenshot_url: string;
+
   @Column({ length: 100, nullable: true })
   primary_language: string;
 

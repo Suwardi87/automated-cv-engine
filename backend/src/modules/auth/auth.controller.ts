@@ -53,6 +53,19 @@ export class AuthController {
         idField: 'id',
         usernameField: 'username',
       },
+      linkedin: {
+        authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
+        tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
+        userUrl: 'https://api.linkedin.com/v2/userinfo',
+        clientId: process.env.LINKEDIN_CLIENT_ID || '',
+        clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+        scope: 'openid profile email',
+        redirectUri: `${appUrl}/api/auth/linkedin/callback`,
+        emailField: 'email',
+        nameField: 'name',
+        avatarField: 'picture',
+        idField: 'sub',
+      },
     };
   }
 

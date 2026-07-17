@@ -20,6 +20,15 @@ interface LinkedinProfile {
   given_name?: string;
   family_name?: string;
   picture?: string;
+  email?: string;
+}
+
+interface LinkedinMe {
+  id?: string;
+  localizedHeadline?: string;
+  localizedFirstName?: string;
+  localizedLastName?: string;
+  profilePicture?: { 'displayImage~'?: { elements?: [{ identifiers?: [{ identifier?: string }] }] } };
 }
 
 interface LinkedinPost {
@@ -60,6 +69,8 @@ export class SocialService {
     private socialRepo: Repository<SocialAccount>,
     @InjectRepository(MediaPortfolio)
     private mediaRepo: Repository<MediaPortfolio>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
     private auth: AuthService,
   ) {}
 
@@ -106,18 +117,68 @@ export class SocialService {
     }
   }
 
+  async getLinkedinProfile(user: User) {
+    const account = await this.socialRepo.findOneBy({ user_id: user.id, platform: 'linkedin' });
+    if (!account) {
+      throw new HttpException('LinkedIn account not connected', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const [userinfoRes, meRes] = await Promise.allSettled([
+        axios.get<LinkedinProfile>('https://api.linkedin.com/v2/userinfo', {
+          headers: { Authorization: `Bearer ${account.access_token}` },
+          timeout: 10000,
+        }),
+        axios.get<LinkedinMe>(
+          'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,localizedHeadline,profilePicture(displayImage~:playableStreams))',
+          {
+            headers: { Authorization: `Bearer ${account.access_token}` },
+            timeout: 10000,
+          },
+        ),
+      ]);
+
+      const userinfo = userinfoRes.status === 'fulfilled' ? userinfoRes.value.data : {};
+      const me = meRes.status === 'fulfilled' ? meRes.value.data : {};
+
+      return {
+        id: userinfo.sub ?? me.id ?? '',
+        name: userinfo.name ?? `${me.localizedFirstName ?? ''} ${me.localizedLastName ?? ''}`.trim(),
+        email: userinfo.email ?? '',
+        picture: userinfo.picture ?? '',
+        headline: me.localizedHeadline ?? '',
+        first_name: userinfo.given_name ?? me.localizedFirstName ?? '',
+        last_name: userinfo.family_name ?? me.localizedLastName ?? '',
+      };
+    } catch (err: any) {
+      throw new HttpException(
+        { message: 'Gagal mengambil profil LinkedIn', error: err?.message },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
   private async syncLinkedin(user: User, account: SocialAccount): Promise<SyncResult> {
     try {
-      const profileRes = await axios.get<LinkedinProfile>('https://api.linkedin.com/v2/userinfo', {
-        headers: { Authorization: `Bearer ${account.access_token}` },
-        timeout: 10000,
-      });
+      const profile = await this.getLinkedinProfile(user);
+      let savedCount = 0;
 
-      const linkedinSub = profileRes.data?.sub;
-      if (!linkedinSub) {
-        return { platform: 'linkedin', success: false, count: 0, error: 'Gagal mendapatkan profil LinkedIn' };
+      const updates: Partial<User> = {};
+      if (profile.headline && user.job_title !== profile.headline) {
+        updates.job_title = profile.headline;
+      }
+      if (profile.name && user.name !== profile.name) {
+        updates.name = profile.name;
+      }
+      if (profile.picture && user.avatar_url !== profile.picture) {
+        updates.avatar_url = profile.picture;
+      }
+      if (Object.keys(updates).length > 0) {
+        await this.userRepo.update(user.id, updates);
+        savedCount++;
       }
 
+      const linkedinSub = profile.id || account.provider_id;
       let posts: LinkedinPost[] = [];
       try {
         const postsRes = await axios.get<{ elements?: LinkedinPost[] }>(
@@ -148,7 +209,6 @@ export class SocialService {
         }
       }
 
-      let savedCount = 0;
       const existingIds = new Set(
         (await this.mediaRepo.find({
           where: { user_id: user.id, platform: 'linkedin' },
