@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { GithubService } from './github.service';
 import { ScreenshotService } from './screenshot.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -30,9 +30,25 @@ export class GithubController {
     return this.github.sync(user);
   }
 
+  @Post('autodetect-urls')
+  async autodetect(@CurrentUser() user: User) {
+    const data = await this.github.autodetectLiveUrls(user.id);
+    return { success: true, data };
+  }
+
   @Post(':project/toggle-feature')
   async toggleFeature(@CurrentUser() user: User, @Param('project') project: string) {
     const data = await this.github.toggleFeature(+project, user.id);
+    return { success: true, data };
+  }
+
+  @Put(':project/live-url')
+  async updateLiveUrl(
+    @CurrentUser() user: User,
+    @Param('project') project: string,
+    @Body('live_url') liveUrl: string,
+  ) {
+    const data = await this.github.updateLiveUrl(+project, user.id, liveUrl ?? '');
     return { success: true, data };
   }
 
@@ -45,7 +61,7 @@ export class GithubController {
 
   @Post('screenshot-all')
   async captureAll(@CurrentUser() user: User) {
-    const targets = await this.github.findAllWithLiveUrl(user.id);
+    const targets = await this.github.findAll(user.id);
     const data = await this.screenshot.captureMany(targets);
     return { success: true, data };
   }

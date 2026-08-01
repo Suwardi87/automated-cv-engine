@@ -190,7 +190,7 @@
             class="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 transition-all hover:border-zinc-700 hover:bg-zinc-900/60"
           >
             <div class="relative aspect-video overflow-hidden border-b border-zinc-800/60 bg-zinc-950">
-              <a v-if="repo.live_url" :href="repo.live_url" target="_blank" rel="noopener" class="block h-full w-full">
+              <a :href="repo.live_url || repo.repo_url" target="_blank" rel="noopener" class="block h-full w-full">
                 <img
                   v-if="repo.screenshot_url"
                   :src="repo.screenshot_url"
@@ -202,9 +202,52 @@
                   <svg class="h-8 w-8 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
                 </div>
               </a>
-              <div v-else class="flex h-full w-full items-center justify-center">
-                <svg class="h-8 w-8 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-              </div>
+              <span
+                v-if="repo.live_url"
+                class="absolute right-12 top-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300 backdrop-blur-sm"
+              >
+                <span class="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                LIVE
+              </span>
+              <span
+                v-else-if="repo.screenshot_url"
+                class="absolute right-12 top-2 inline-flex items-center gap-1 rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2 py-0.5 text-[9px] font-bold text-zinc-300 backdrop-blur-sm"
+              >
+                REPO
+              </span>
+              <button
+                @click.prevent="toggleFeatured(repo)"
+                :disabled="togglingFeaturedId === repo.id"
+                :class="[
+                  'absolute left-2 top-2 rounded-lg border p-1.5 backdrop-blur-sm transition-colors disabled:opacity-50',
+                  repo.is_featured
+                    ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                    : 'border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:text-amber-300',
+                ]"
+                :title="repo.is_featured ? 'Hapus dari unggulan' : 'Jadikan unggulan'"
+              >
+                <svg v-if="togglingFeaturedId === repo.id" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <svg v-else class="h-3 w-3" :fill="repo.is_featured ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118L2.98 8.72c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </button>
+              <button
+                @click.prevent="openLiveUrlModal(repo)"
+                :class="[
+                  'absolute right-12 top-2 rounded-lg border p-1.5 backdrop-blur-sm transition-colors',
+                  repo.live_url
+                    ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                    : 'border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:text-emerald-300',
+                ]"
+                :title="repo.live_url ? 'Edit live URL' : 'Set live URL'"
+              >
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </button>
               <button
                 v-if="repo.live_url"
                 @click.prevent="captureScreenshot(repo.id)"
@@ -256,6 +299,61 @@
         </NuxtLink>
       </div>
     </div>
+
+    <!-- Modal Edit Live URL -->
+    <Teleport to="body">
+      <div
+        v-if="liveUrlModal.open"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm"
+        @click.self="closeLiveUrlModal"
+      >
+        <div class="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-white">Live URL Project</h3>
+              <p class="mt-0.5 text-xs text-zinc-500">{{ liveUrlModal.title }}</p>
+            </div>
+            <button
+              @click="closeLiveUrlModal"
+              class="rounded-lg p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            URL Website Live
+          </label>
+          <input
+            v-model="liveUrlModal.value"
+            type="url"
+            placeholder="https://example.com"
+            class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            @keydown.enter="saveLiveUrl"
+            @keydown.escape="closeLiveUrlModal"
+          />
+          <p class="mt-2 text-xs text-zinc-500">
+            Setelah simpan, screenshot akan otomatis di-capture di background (~5-10 detik).
+          </p>
+
+          <div class="mt-5 flex justify-end gap-2">
+            <button
+              @click="closeLiveUrlModal"
+              class="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-800"
+            >
+              Batal
+            </button>
+            <button
+              @click="saveLiveUrl"
+              :disabled="liveUrlModal.saving"
+              class="rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {{ liveUrlModal.saving ? 'Menyimpan...' : 'Simpan' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -284,6 +382,14 @@ const allTechStack = computed(() => [...new Set(repos.value.flatMap(r => r.tech_
 const screenshotLoading = ref(false)
 const screenshotLoadingId = ref<number | null>(null)
 const screenshotMessage = ref('')
+const togglingFeaturedId = ref<number | null>(null)
+const liveUrlModal = reactive({
+  open: false,
+  id: 0,
+  title: '',
+  value: '',
+  saving: false,
+})
 
 async function loadRepos() {
   try {
@@ -295,6 +401,65 @@ async function loadRepos() {
 }
 
 onMounted(loadRepos)
+
+function openLiveUrlModal(repo: Repo) {
+  liveUrlModal.id = repo.id
+  liveUrlModal.title = repo.title
+  liveUrlModal.value = repo.live_url ?? ''
+  liveUrlModal.saving = false
+  liveUrlModal.open = true
+}
+
+function closeLiveUrlModal() {
+  liveUrlModal.open = false
+}
+
+async function saveLiveUrl() {
+  if (!liveUrlModal.id) return
+  liveUrlModal.saving = true
+  try {
+    const res = await useApi().put<{ success: boolean; data: Repo }>(`/github/${liveUrlModal.id}/live-url`, {
+      live_url: liveUrlModal.value,
+    })
+    if (res.success && res.data) {
+      const idx = repos.value.findIndex(r => r.id === liveUrlModal.id)
+      if (idx >= 0) {
+        const target = repos.value[idx]
+        if (target) {
+          target.live_url = res.data.live_url
+          target.screenshot_url = res.data.screenshot_url
+        }
+      }
+      screenshotMessage.value = 'Live URL disimpan. Screenshot sedang di-capture di background.'
+      setTimeout(() => { screenshotMessage.value = '' }, 6000)
+    }
+    liveUrlModal.open = false
+  } catch {
+    // ignore — global toast handles it
+  } finally {
+    liveUrlModal.saving = false
+  }
+}
+
+async function toggleFeatured(repo: Repo) {
+  togglingFeaturedId.value = repo.id
+  try {
+    const res = await useApi().post<{ success: boolean; data: Repo }>(`/github/${repo.id}/toggle-feature`)
+    if (res.success && res.data) {
+      const idx = repos.value.findIndex(r => r.id === repo.id)
+      if (idx >= 0) {
+        const target = repos.value[idx]
+        if (target) {
+          target.is_featured = res.data.is_featured
+        }
+      }
+    }
+  } catch {
+    // ignore — toast handled globally
+  } finally {
+    togglingFeaturedId.value = null
+  }
+}
 
 async function captureScreenshot(id: number | undefined) {
   if (!id) return

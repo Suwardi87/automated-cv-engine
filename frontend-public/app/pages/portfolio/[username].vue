@@ -181,12 +181,11 @@ function formatTime(dateStr: string): string {
               <!-- Preview Screenshot -->
               <div class="relative aspect-video overflow-hidden border-b border-zinc-900 bg-zinc-950">
                 <a
-                  v-if="project.live_url"
-                  :href="project.live_url"
+                  :href="project.live_url || project.repo_url"
                   target="_blank"
                   rel="noopener"
                   class="block h-full w-full"
-                  :title="`Buka ${project.title} live`"
+                  :title="project.live_url ? `Buka ${project.title} live` : `Lihat repo ${project.title}`"
                 >
                   <img
                     v-if="project.screenshot_url"
@@ -203,15 +202,10 @@ function formatTime(dateStr: string): string {
                   <div class="absolute inset-0 flex items-center justify-center bg-zinc-950/0 transition-colors group-hover:bg-zinc-950/40">
                     <span class="flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-xs font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                       <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                      Lihat Live Preview
+                      {{ project.live_url ? 'Lihat Live Preview' : 'Lihat di GitHub' }}
                     </span>
                   </div>
                 </a>
-                <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-900/20 to-zinc-900">
-                  <svg class="h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                </div>
                 <span
                   v-if="project.is_featured"
                   class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[9px] font-bold text-amber-300 backdrop-blur-sm"
@@ -224,6 +218,13 @@ function formatTime(dateStr: string): string {
                 >
                   <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   LIVE
+                </span>
+                <span
+                  v-else-if="project.screenshot_url"
+                  class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2.5 py-0.5 text-[9px] font-bold text-zinc-300 backdrop-blur-sm"
+                >
+                  <svg class="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                  REPO
                 </span>
               </div>
 

@@ -42,11 +42,11 @@ export class GithubProject {
   @Column({ length: 255 })
   repo_url: string;
 
-  @Column({ length: 255, nullable: true })
-  live_url: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  live_url: string | null;
 
-  @Column({ length: 500, nullable: true })
-  screenshot_url: string;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  screenshot_url: string | null;
 
   @Column({ length: 100, nullable: true })
   primary_language: string;

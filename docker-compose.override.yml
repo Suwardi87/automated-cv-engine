@@ -1,0 +1,8 @@
+services:
+  nestjs-api:
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1024
+    deploy:
+      resources:
+        limits:
+          memory: 1G

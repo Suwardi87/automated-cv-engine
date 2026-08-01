@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.4.0] - 2026-07-21
+- feat(github): tambah sistem screenshot otomatis dengan custom card generator, README URL extraction, dan auto-detect URL untuk e-gov projects
+
 ## [0.3.0] - 2026-07-17
 - feat(github): tambah screenshot otomatis project via puppeteer + thumbnail preview di portfolio
 
