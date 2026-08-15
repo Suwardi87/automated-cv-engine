@@ -63,7 +63,7 @@ export class GithubService {
     }
 
     const res = await axios.get<GithubApiRepo[]>('https://api.github.com/user/repos', {
-      params: { per_page: 100, sort: 'pushed' },
+      params: { per_page: 100, sort: 'pushed', affiliation: 'owner' },
       headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' },
     });
 

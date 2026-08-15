@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.2] - 2026-08-15
+- fix(github): filter repo milik sendiri saja (affiliation=owner) saat sync + perbaiki label section jadi Repositori Lainnya
+
 ## [0.5.1] - 2026-08-15
 - fix(security): upgrade nuxt 4.5.2 + fast-uri 3.1.5 untuk menutup vulnerability high (RCE server island, SSR data leak)
 
