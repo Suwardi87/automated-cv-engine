@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.1] - 2026-08-15
+- fix(security): upgrade nuxt 4.5.2 + fast-uri 3.1.5 untuk menutup vulnerability high (RCE server island, SSR data leak)
+
 ## [0.5.0] - 2026-08-15
 - feat(portfolio): tambah animasi scroll-reveal + refresh UI landing dan halaman portfolio + urutkan project featured duluan
 
