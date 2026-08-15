@@ -83,7 +83,7 @@ export class ScreenshotService {
         waitUntil: 'networkidle2',
         timeout: NAV_TIMEOUT,
       });
-      await new Promise((r) => setTimeout(r, isLive ? 1500 : 800));
+      await this.settlePage(page, isLive);
       await page.screenshot({
         path: outputPath,
         type: 'png',
@@ -105,6 +105,44 @@ export class ScreenshotService {
         try { await browser.close(); } catch { /* ignore */ }
       }
     }
+  }
+
+  private async settlePage(page: import('puppeteer-core').Page, isLive: boolean): Promise<void> {
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let scrolled = false;
+        const step = () => {
+          if (scrolled) {
+            window.scrollTo(0, 0);
+            resolve();
+            return;
+          }
+          scrolled = true;
+          window.scrollTo(0, document.body.scrollHeight);
+          setTimeout(step, 600);
+        };
+        step();
+      });
+    });
+
+    await page.evaluate(async () => {
+      const imgs = Array.from(document.images);
+      await Promise.all(
+        imgs.map((img) =>
+          img.complete && img.naturalWidth > 0
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener('load', () => resolve(), { once: true });
+                img.addEventListener('error', () => resolve(), { once: true });
+                setTimeout(resolve, 8000);
+              }),
+        ),
+      );
+    });
+
+    await new Promise((r) => setTimeout(r, isLive ? 3000 : 1200));
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await new Promise((r) => setTimeout(r, 300));
   }
 
   private async generateCustomCard(project: GithubProject): Promise<string | null> {
