@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.5] - 2026-08-15
+- fix(github): project mobile app pakai custom card, bukan screenshot web (app tidak bisa di-capture via browser)
+
 ## [0.5.4] - 2026-08-15
 - fix(github): screenshot project mobile (Dart/Flutter/mobile-) pakai viewport HP 390x844 + emulasi touch
 

@@ -11,9 +11,6 @@ const SCREENSHOTS_DIR = join(process.cwd(), 'static', 'screenshots');
 const VIEWPORT_WIDTH = 1280;
 const VIEWPORT_HEIGHT = 720;
 const NAV_TIMEOUT = 20000;
-const MOBILE_WIDTH = 390;
-const MOBILE_HEIGHT = 844;
-const MOBILE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 @Injectable()
 export class ScreenshotService {
@@ -47,6 +44,11 @@ export class ScreenshotService {
       return null;
     }
 
+    if (this.isMobileProject(project)) {
+      this.logger.log(`Project "${project.title}" terdeteksi mobile app — pakai custom card`);
+      return this.generateCustomCard(project);
+    }
+
     if (hasLiveUrl) {
       const liveShot = await this.captureUrl(project, project.live_url as string, true);
       if (liveShot) return liveShot;
@@ -76,38 +78,22 @@ export class ScreenshotService {
     try {
       browser = await this.launchBrowser(executablePath);
       const page = await browser.newPage();
-      const isMobile = this.isMobileProject(project);
-      if (isMobile) {
-        await page.emulate({
-          viewport: { width: MOBILE_WIDTH, height: MOBILE_HEIGHT, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
-          userAgent: MOBILE_UA,
-        });
-      } else {
-        await page.setViewport({
-          width: VIEWPORT_WIDTH,
-          height: VIEWPORT_HEIGHT,
-          deviceScaleFactor: 1,
-        });
-      }
+      await page.setViewport({
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
+        deviceScaleFactor: 1,
+      });
       await page.setDefaultNavigationTimeout(NAV_TIMEOUT);
       await page.goto(targetUrl, {
         waitUntil: 'networkidle2',
         timeout: NAV_TIMEOUT,
       });
       await this.settlePage(page, isLive);
-      if (isMobile) {
-        await page.screenshot({
-          path: outputPath,
-          type: 'png',
-          clip: { x: 0, y: 0, width: MOBILE_WIDTH, height: MOBILE_HEIGHT },
-        });
-      } else {
-        await page.screenshot({
-          path: outputPath,
-          type: 'png',
-          clip: { x: 0, y: 0, width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
-        });
-      }
+      await page.screenshot({
+        path: outputPath,
+        type: 'png',
+        clip: { x: 0, y: 0, width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
+      });
 
       project.screenshot_url = publicUrl;
       await this.repo.save(project);
