@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.4] - 2026-08-15
+- fix(github): screenshot project mobile (Dart/Flutter/mobile-) pakai viewport HP 390x844 + emulasi touch
+
 ## [0.5.3] - 2026-08-15
 - fix(github): tambah flag is_hidden + endpoint toggle-visibility untuk sembunyikan project dari portfolio dan CV
 
