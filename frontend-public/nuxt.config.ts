@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: true,
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+  css: ['~/assets/css/main.css'],
   app: {
     head: {
       title: 'OmniSync Portfolio',

@@ -40,7 +40,7 @@ export class PortfolioService {
     const [github_projects, gitlab_projects, media_portfolios, educations, work_experiences, certificates, organizations] = await Promise.all([
       this.githubRepo.find({
         where: { user_id: user.id },
-        order: { last_pushed_at: 'DESC' },
+        order: { is_featured: 'DESC', last_pushed_at: 'DESC' },
         select: ['id', 'title', 'slug', 'ai_summary', 'tech_stack', 'repo_url', 'live_url', 'screenshot_url', 'primary_language', 'stars_count', 'forks_count', 'is_featured', 'last_pushed_at'],
       }),
       this.gitlabRepo.find({

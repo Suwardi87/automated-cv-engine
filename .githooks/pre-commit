@@ -26,8 +26,19 @@ if docker compose ps --status running 2>&1 | grep -q "nestjs"; then
     NEST_RUNNING=true
 fi
 
-# Frontend typecheck via Nuxt container
-if [ "$NUXT_RUNNING" = "true" ]; then
+# Frontend typecheck — prioritas di host (heap besar, container 512MB terlalu
+# kecil untuk vue-tsc yang butuh ~1-2GB). Fallback ke Docker kalau node_modules
+# tidak ada di host.
+FRONTEND_DIR="frontend-public"
+if [ -x "${FRONTEND_DIR}/node_modules/.bin/nuxi" ]; then
+    echo -e "\033[0;34m   → Nuxt typecheck (host, heap 4GB)...\033[0m"
+    if (cd "${FRONTEND_DIR}" && NODE_OPTIONS=--max-old-space-size=4096 npx nuxi typecheck 2>&1); then
+        echo -e "\033[0;32m   ✓ Nuxt typecheck OK\033[0m"
+    else
+        echo -e "\033[0;31m   ❌ Nuxt typecheck gagal\033[0m"
+        HAS_ERROR=true
+    fi
+elif [ "$NUXT_RUNNING" = "true" ]; then
     echo -e "\033[0;34m   → Nuxt typecheck (via Docker)...\033[0m"
     if docker compose exec -T nuxt-public npx nuxi typecheck 2>&1; then
         echo -e "\033[0;32m   ✓ Nuxt typecheck OK\033[0m"

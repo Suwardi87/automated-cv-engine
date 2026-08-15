@@ -14,9 +14,10 @@
         <div>
           <h3 class="mb-3 text-sm font-semibold text-white">Produk</h3>
           <ul class="space-y-2">
-            <li><a href="#features" class="text-sm text-gray-400 transition-colors hover:text-white">Fitur</a></li>
-            <li><a href="#how-it-works" class="text-sm text-gray-400 transition-colors hover:text-white">Cara Kerja</a></li>
-            <li><a href="#cta" class="text-sm text-gray-400 transition-colors hover:text-white">Mulai</a></li>
+            <li><a href="/#features" class="text-sm text-gray-400 transition-colors hover:text-white">Fitur</a></li>
+            <li><a href="/#how-it-works" class="text-sm text-gray-400 transition-colors hover:text-white">Cara Kerja</a></li>
+            <li><NuxtLink to="/portfolio/suwardi87" class="text-sm text-indigo-400 transition-colors hover:text-indigo-300">Lihat Portofolio</NuxtLink></li>
+            <li><a href="/#cta" class="text-sm text-gray-400 transition-colors hover:text-white">Mulai</a></li>
           </ul>
         </div>
         <div>
