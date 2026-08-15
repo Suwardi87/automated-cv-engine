@@ -354,13 +354,13 @@ export class GithubService {
       { match: /^web-?damkar$/i, url: 'https://simpatik.disdamkar.padang.go.id' },
       { match: /^web-?pariwisata$/i, url: 'https://pariwisata.padang.go.id' },
       { match: /^wisataxkoto/i, url: 'https://pariwisata.padang.go.id' },
-      { match: /^web-?jdih$/i, url: 'https://jdih.padang.go.id' },
+      { match: /^web-?jdih$/i, url: 'https://jdih.dprd.padang.go.id' },
       { match: /^web-?dispora$/i, url: 'https://dispora.padang.go.id' },
       { match: /^web-?ldpi$/i, url: 'https://ldpi.padang.go.id' },
       { match: /^web-?dp3p3kb$/i, url: 'https://dp3p3kb.padang.go.id' },
       { match: /^dispora$/i, url: 'https://dispora.padang.go.id' },
       { match: /^ldpi$/i, url: 'https://ldpi.padang.go.id' },
-      { match: /^jdih$/i, url: 'https://jdih.padang.go.id' },
+      { match: /^jdih$/i, url: 'https://jdih.dprd.padang.go.id' },
     ];
 
     for (const { match, url } of knownMappings) {
