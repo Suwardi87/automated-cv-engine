@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.3] - 2026-08-15
+- fix(github): tambah flag is_hidden + endpoint toggle-visibility untuk sembunyikan project dari portfolio dan CV
+
 ## [0.5.2] - 2026-08-15
 - fix(github): filter repo milik sendiri saja (affiliation=owner) saat sync + perbaiki label section jadi Repositori Lainnya
 

@@ -66,6 +66,9 @@ export class GithubProject {
   @Column({ default: false })
   is_featured: boolean;
 
+  @Column({ default: false })
+  is_hidden: boolean;
+
   @Index('IDX_github_project_user_pushed', ['user_id', 'last_pushed_at'])
   @Column({ type: 'timestamp' })
   last_pushed_at: Date;

@@ -45,7 +45,7 @@ export class CvService {
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const [repos, educations, workExperiences, certificates, organizations] = await Promise.all([
-      this.githubRepo.find({ where: { user_id: userId }, order: { last_pushed_at: 'DESC' } }),
+      this.githubRepo.find({ where: { user_id: userId, is_hidden: false }, order: { last_pushed_at: 'DESC' } }),
       this.educationRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
       this.workRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
       this.certRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),

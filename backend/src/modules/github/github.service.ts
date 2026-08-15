@@ -288,6 +288,13 @@ export class GithubService {
     return this.repo.save(project);
   }
 
+  async toggleVisibility(id: number, userId: number) {
+    const project = await this.repo.findOneBy({ id, user_id: userId });
+    if (!project) throw new NotFoundException('Proyek tidak ditemukan');
+    project.is_hidden = !project.is_hidden;
+    return this.repo.save(project);
+  }
+
   private detectLiveUrlFromReadme(readme: string | null): string | null {
     if (!readme) return null;
 

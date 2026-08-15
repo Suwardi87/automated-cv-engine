@@ -42,6 +42,12 @@ export class GithubController {
     return { success: true, data };
   }
 
+  @Post(':project/toggle-visibility')
+  async toggleVisibility(@CurrentUser() user: User, @Param('project') project: string) {
+    const data = await this.github.toggleVisibility(+project, user.id);
+    return { success: true, data };
+  }
+
   @Put(':project/live-url')
   async updateLiveUrl(
     @CurrentUser() user: User,
