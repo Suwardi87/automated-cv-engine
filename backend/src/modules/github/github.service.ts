@@ -360,7 +360,6 @@ export class GithubService {
       { match: /^mobile_?damkar$/i, url: 'https://simpatik.disdamkar.padang.go.id' },
       { match: /^web-?damkar$/i, url: 'https://simpatik.disdamkar.padang.go.id' },
       { match: /^web-?pariwisata$/i, url: 'https://pariwisata.padang.go.id' },
-      { match: /^wisataxkoto/i, url: 'https://pariwisata.padang.go.id' },
       { match: /^web-?jdih$/i, url: 'https://jdih.dprd.padang.go.id' },
       { match: /^web-?dispora$/i, url: 'https://dispora.padang.go.id' },
       { match: /^web-?ldpi$/i, url: 'https://ldpi.padang.go.id' },

@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.6] - 2026-08-16
+- fix(github): live_url pariwisata hanya untuk web-pariwisata, hapus mapping wisataXkoto
+
 ## [0.5.5] - 2026-08-15
 - fix(github): project mobile app pakai custom card, bukan screenshot web (app tidak bisa di-capture via browser)
 
