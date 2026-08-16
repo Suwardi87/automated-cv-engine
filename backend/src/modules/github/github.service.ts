@@ -471,8 +471,9 @@ export class GithubService {
     const saved = await this.repo.save(project);
 
     if (trimmed) {
+      const fresh = await this.repo.findOneByOrFail({ id });
       Promise.resolve()
-        .then(() => this.screenshot.captureScreenshot(saved))
+        .then(() => this.screenshot.captureScreenshot(fresh))
         .catch((err) => {
           this.logger.error(
             `Auto-screenshot after live_url update failed: ${err instanceof Error ? err.message : String(err)}`,

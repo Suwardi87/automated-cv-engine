@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.5.7] - 2026-08-16
+- fix(github): fix race condition: screenshot service update kolom saja (repo.update) agar tidak menimpa is_featured/is_hidden
+
 ## [0.5.6] - 2026-08-16
 - fix(github): live_url pariwisata hanya untuk web-pariwisata, hapus mapping wisataXkoto
 

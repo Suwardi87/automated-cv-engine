@@ -95,11 +95,8 @@ export class ScreenshotService {
         clip: { x: 0, y: 0, width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
       });
 
-      project.screenshot_url = publicUrl;
-      await this.repo.save(project);
-
       this.logger.log(`Screenshot saved for project "${project.title}" (${isLive ? 'live' : 'url'})`);
-      return publicUrl;
+      return (await this.updateScreenshotField(project.id, publicUrl)).screenshot_url;
     } catch (err) {
       this.logger.error(
         `Failed to screenshot "${project.title}" at ${targetUrl}: ${err instanceof Error ? err.message : String(err)}`,
@@ -110,6 +107,14 @@ export class ScreenshotService {
         try { await browser.close(); } catch { /* ignore */ }
       }
     }
+  }
+
+  private async updateScreenshotField(
+    projectId: number,
+    publicUrl: string,
+  ): Promise<{ screenshot_url: string | null }> {
+    await this.repo.update({ id: projectId }, { screenshot_url: publicUrl });
+    return { screenshot_url: publicUrl };
   }
 
   private isMobileProject(project: GithubProject): boolean {
@@ -396,11 +401,8 @@ export class ScreenshotService {
         clip: { x: 0, y: 0, width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
       });
 
-      project.screenshot_url = publicUrl;
-      await this.repo.save(project);
-
       this.logger.log(`Custom card generated for "${project.title}"`);
-      return publicUrl;
+      return (await this.updateScreenshotField(project.id, publicUrl)).screenshot_url;
     } catch (err) {
       this.logger.error(
         `Custom card failed for "${project.title}": ${err instanceof Error ? err.message : String(err)}`,
