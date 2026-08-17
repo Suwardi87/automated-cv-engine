@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
+# install-hooks.sh — Pasang pre-push hook (CI + CD) ke .githooks/ (core.hooksPath)
+# Menggabungkan: proteksi branch bawaan workflow + pipeline CI/CD.
+# Jalankan: bash scripts/install-hooks.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+HOOKS_DIR="$REPO_ROOT/.githooks"
+HOOK_FILE="$HOOKS_DIR/pre-push"
+SRC_FILE="$REPO_ROOT/scripts/pre-push.sh"
+
+if [ ! -d "$HOOKS_DIR" ]; then
+  echo "[hooks] .githooks/ tidak ditemukan — pastikan core.hooksPath sudah di-set."
+  exit 1
+fi
+
+if [ ! -f "$SRC_FILE" ]; then
+  echo "[hooks] scripts/pre-push.sh tidak ditemukan."
+  exit 1
+fi
+
+cat > "$HOOK_FILE" << 'EOF'
+#!/usr/bin/env bash
 # ==============================================================================
 # pre-push hook — gabungan: PROTECT branch (bawaan wizard) + CI/CD pipeline
 # Dihasilkan oleh scripts/install-hooks.sh — jangan edit manual.
@@ -37,3 +60,13 @@ fi
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 exec "$REPO_ROOT/scripts/pre-push.sh" "$@" <<< "$REF_DATA"
+EOF
+
+chmod +x "$HOOK_FILE"
+echo "[hooks] pre-push terpasang: $HOOK_FILE"
+echo "[hooks] Logika proteksi branch + pipeline CI/CD aktif."
+echo "[hooks] Selesai. Setiap 'git push origin main' akan:"
+echo "         1. Cek proteksi branch (ALLOW_PROTECTED_PUSH)"
+echo "         2. typecheck + build (CI lokal) — gagal = push dibatalkan"
+echo "         3. push ke GitHub"
+echo "         4. deploy otomatis ke server (CD) setelah push terverifikasi"
