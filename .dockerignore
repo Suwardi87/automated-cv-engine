@@ -19,3 +19,5 @@ frontend-public/.output
 README.md
 AGENTS.md
 *.md
+
+**/.env

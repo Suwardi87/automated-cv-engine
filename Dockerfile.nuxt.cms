@@ -5,6 +5,15 @@ WORKDIR /app
 COPY frontend-cms/package.json frontend-cms/package-lock.json ./
 RUN npm ci
 
+COPY frontend-cms/ ./
+
+ARG NUXT_PUBLIC_API_BASE
+ARG NUXT_API_BASE_SSR
+ENV NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE}
+ENV NUXT_API_BASE_SSR=${NUXT_API_BASE_SSR}
+RUN npm run build
+
+ENV PORT=3001
 EXPOSE 3001
 
-CMD ["npx", "nuxi", "dev", "--port", "3001"]
+CMD ["node", ".output/server/index.mjs"]

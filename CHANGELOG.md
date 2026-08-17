@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.6.5] - 2026-08-17
+- fix: produksi nuxt public & cms pakai production build (fix 403 allowedHosts)
+
 ## [0.6.4] - 2026-08-17
 - fix(fix): feat(portfolio): hapus section Repositori Lainnya dari halaman portfolio publik (hanya tampil Proyek Unggulan)
 

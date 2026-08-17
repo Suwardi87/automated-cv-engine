@@ -78,19 +78,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nuxt.public
+      args:
+        NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
+        NUXT_API_BASE_SSR: http://nestjs-api:9000/api
     container_name: omnisync-nuxt-public
     restart: unless-stopped
     expose:
       - "3000"
-    volumes:
-      - ./frontend-public:/app
-      - nuxt_public_modules:/app/node_modules
-      - nuxt_public_nuxt:/app/.nuxt
     environment:
       NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
       NUXT_API_BASE_SSR: http://nestjs-api:9000/api
-      NUXT_HOST: 0.0.0.0
-      NUXT_PORT: 3000
+      PORT: 3000
     depends_on:
       - nestjs-api
     networks:
@@ -105,19 +103,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nuxt.cms
+      args:
+        NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
+        NUXT_API_BASE_SSR: http://nestjs-api:9000/api
     container_name: omnisync-nuxt-cms
     restart: unless-stopped
     expose:
       - "3001"
-    volumes:
-      - ./frontend-cms:/app
-      - nuxt_cms_modules:/app/node_modules
-      - nuxt_cms_nuxt:/app/.nuxt
     environment:
       NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
       NUXT_API_BASE_SSR: http://nestjs-api:9000/api
-      NUXT_HOST: 0.0.0.0
-      NUXT_PORT: 3001
+      PORT: 3001
     depends_on:
       - nestjs-api
     networks:
@@ -130,10 +126,6 @@ services:
 
 volumes:
   nestjs_modules:
-  nuxt_public_modules:
-  nuxt_public_nuxt:
-  nuxt_cms_modules:
-  nuxt_cms_nuxt:
   omnisync_pgdata:
 
 networks:
