@@ -1,31 +1,30 @@
 <template>
-  <section class="relative overflow-hidden bg-gradient-to-br from-gray-900 via-indigo-950 to-purple-950 pt-24">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.15),transparent_50%)]"></div>
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.1),transparent_50%)]"></div>
-    <!-- Animated glow -->
-    <div class="absolute left-1/4 top-1/3 h-72 w-72 rounded-full bg-indigo-500/20 blur-[120px] animate-pulse" style="animation-duration: 4s"></div>
-    <div class="absolute right-1/4 top-1/2 h-72 w-72 rounded-full bg-purple-500/15 blur-[120px] animate-pulse" style="animation-duration: 6s; animation-delay: 1s"></div>
+  <section class="relative overflow-hidden bg-[#040506] pt-28">
+    <!-- Signature diagonal stripe pattern -->
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-56 opacity-[0.05]" style="background-image: repeating-linear-gradient(-45deg, #55b3ff 0 2px, transparent 2px 18px);"></div>
+    <!-- Glow -->
+    <div class="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-[#55b3ff]/[0.08] blur-[140px]"></div>
 
-    <div class="relative mx-auto max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
+    <div class="relative mx-auto max-w-7xl px-4 pb-28 pt-16 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-3xl text-center">
-        <div v-reveal class="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-sm font-medium text-indigo-300 backdrop-blur-sm">
-          <span class="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
-          Mesin Portofolio Bertenaga AI
+        <div v-reveal class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-4 py-1.5 font-mono text-xs font-medium text-[#8e8e90]">
+          <span class="flex h-2 w-2 rounded-full bg-[#55b3ff]"></span>
+          // Mesin Portofolio Bertenaga AI
         </div>
 
-        <h1 v-reveal="{ delay: 100 }" class="bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-5xl font-extrabold leading-tight text-transparent sm:text-6xl lg:text-7xl">
+        <h1 v-reveal="{ delay: 100 }" class="text-5xl font-bold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl">
           Bangun Portofolio<br class="hidden sm:inline"> Bertenaga AI-mu
         </h1>
 
-        <p v-reveal="{ delay: 200 }" class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-300 sm:text-xl">
+        <p v-reveal="{ delay: 200 }" class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[#c8c8ca] sm:text-xl">
           Hubungkan GitHub, sinkronkan proyekmu, dan buat CV profesional —
-          <span class="font-semibold text-indigo-300">semua didukung AI, semua otomatis.</span>
+          <span class="font-semibold text-[#6cbfff]">semua didukung AI, semua otomatis.</span>
         </p>
 
         <div v-reveal="{ delay: 300 }" class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <NuxtLink
             to="/portfolio/suwardi87"
-            class="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all hover:shadow-xl hover:shadow-indigo-600/40"
+            class="group inline-flex items-center gap-2 rounded-full bg-[#55b3ff] px-8 py-3.5 text-base font-semibold text-[#07080a] transition-colors hover:bg-[#6cbfff]"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -39,7 +38,7 @@
           <NuxtLink
             external
             to="/cms/login"
-            class="inline-flex items-center gap-2 rounded-xl border border-gray-600 px-8 py-3.5 text-base font-semibold text-gray-200 transition-all hover:border-gray-400 hover:text-white"
+            class="inline-flex items-center gap-2 rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-8 py-3.5 text-base font-semibold text-[#c8c8ca] transition-colors hover:border-[#262728] hover:bg-[#151617] hover:text-white"
           >
             Mulai Gratis
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,25 +47,22 @@
           </NuxtLink>
         </div>
 
-        <!-- Trust signals / stats -->
+        <!-- Stats -->
         <div v-reveal="{ delay: 400 }" class="mt-16 grid grid-cols-3 gap-4 sm:gap-8">
           <div class="text-center">
-            <p class="bg-gradient-to-br from-indigo-300 to-purple-300 bg-clip-text text-3xl font-black text-transparent sm:text-4xl">76+</p>
-            <p class="mt-1 text-xs font-medium text-gray-400 sm:text-sm">Proyek Tersinkron</p>
+            <p class="text-3xl font-bold tracking-tight text-[#55b3ff] sm:text-4xl">76+</p>
+            <p class="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-[#8e8e90]">Proyek Tersinkron</p>
           </div>
-          <div class="text-center border-x border-white/10">
-            <p class="bg-gradient-to-br from-indigo-300 to-purple-300 bg-clip-text text-3xl font-black text-transparent sm:text-4xl">14</p>
-            <p class="mt-1 text-xs font-medium text-gray-400 sm:text-sm">Live Deployment</p>
+          <div class="border-x border-[#1e1f21] text-center">
+            <p class="text-3xl font-bold tracking-tight text-[#55b3ff] sm:text-4xl">14</p>
+            <p class="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-[#8e8e90]">Live Deployment</p>
           </div>
           <div class="text-center">
-            <p class="bg-gradient-to-br from-indigo-300 to-purple-300 bg-clip-text text-3xl font-black text-transparent sm:text-4xl">25+</p>
-            <p class="mt-1 text-xs font-medium text-gray-400 sm:text-sm">Tech Stack</p>
+            <p class="text-3xl font-bold tracking-tight text-[#55b3ff] sm:text-4xl">25+</p>
+            <p class="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-[#8e8e90]">Tech Stack</p>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Bottom fade to next section -->
-    <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent"></div>
   </section>
 </template>

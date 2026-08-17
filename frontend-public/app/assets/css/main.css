@@ -1,3 +1,27 @@
+/* Raycast-inspired design tokens */
+:root {
+  --rc-bg: #040506;
+  --rc-surface: #0c0d0e;
+  --rc-surface-hover: #151617;
+  --rc-border: #1e1f21;
+  --rc-border-hover: #262728;
+  --rc-fg: #f4f4f6;
+  --rc-fg-secondary: #c8c8ca;
+  --rc-fg-muted: #8e8e90;
+  --rc-accent: #55b3ff;
+  --rc-accent-hover: #6cbfff;
+  --rc-success: #5fc992;
+  --rc-warning: #ffbc33;
+  --rc-danger: #e04848;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--rc-bg);
+  color: var(--rc-fg);
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Reveal animation — triggered by v-reveal directive */
 .reveal-target {
   opacity: 0;
