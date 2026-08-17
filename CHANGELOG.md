@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.6.4] - 2026-08-17
+- fix(fix): feat(portfolio): hapus section Repositori Lainnya dari halaman portfolio publik (hanya tampil Proyek Unggulan)
+
 ## [0.6.3] - 2026-08-17
 - fix(build): feat(deploy): tambah docker-compose.prod.yml + env.prod.example untuk deployment produksi VPS
 
