@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.6.1] - 2026-08-17
+- fix(cv): skills CV dari evidence nyata (Laravel/MySQL/Tailwind/Docker dll) + filter artifact language saat sync + bersihkan primary_language misleading
+
 ## [0.6.0] - 2026-08-17
 - feat(cv): generate CV PDF server-side ATS-friendly via Puppeteer + AI summary manual endpoint + highlights jsonb + hero portfolio (headline, kontak, tombol Unduh CV)
 

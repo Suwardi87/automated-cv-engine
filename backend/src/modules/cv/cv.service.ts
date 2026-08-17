@@ -65,7 +65,7 @@ export class CvService {
       this.orgRepo.find({ where: { user_id: userId }, order: { sort_order: 'ASC' } }),
     ]);
 
-    const exclude = /^(swift|lua|objective-c|cmake|c\+\+|dart-generated|llvm|assembly|c$|plpgsql|hack|less|go template|kotlin|dockerfile|scss)$/i;
+    const exclude = /^(swift|lua|objective-c|cmake|c\+\+|c$|dart-generated|llvm|assembly|plpgsql|hack|less|go template|kotlin|dockerfile|scss|smarty|makefile|gradle|blade|shell|jupyter notebook)$/i;
     const techSet = new Set<string>();
     repos.forEach((r) => {
       [...(r.tech_stack || []), ...(r.topics || []), r.primary_language].forEach((t) => {
@@ -73,12 +73,50 @@ export class CvService {
       });
     });
 
-    const priority = /^(vue|react|next|nuxt|angular|svelte|php|laravel|go|node|typescript|javascript|python|dart|flutter|kotlin|java|mysql|postgresql|mongodb|redis|docker|kubernetes|aws|nginx|tailwind|bootstrap|express|nestjs|django|flask|spring|blade)/i;
-    const sortedTech = [...techSet].sort((a, b) => {
-      const aP = priority.test(a) ? 0 : 1;
-      const bP = priority.test(b) ? 0 : 1;
-      return aP - bP;
-    });
+    const evidence = [
+      user.job_title,
+      user.bio,
+      ...workExperiences.flatMap((w) => [w.description ?? '', ...(w.highlights ?? [])]),
+      ...repos.map((r) => r.ai_summary ?? ''),
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    const coreMap: Array<[RegExp, string]> = [
+      [/laravel/, 'Laravel'],
+      [/vue/, 'Vue.js'],
+      [/nuxt/, 'Nuxt.js'],
+      [/typescript/, 'TypeScript'],
+      [/javascript/, 'JavaScript'],
+      [/\bphp\b/, 'PHP'],
+      [/flutter|\bdart\b/, 'Flutter & Dart'],
+      [/mysql|mariadb/, 'MySQL'],
+      [/postgres/, 'PostgreSQL'],
+      [/rest api/, 'REST API'],
+      [/tailwind/, 'Tailwind CSS'],
+      [/bootstrap/, 'Bootstrap'],
+      [/docker/, 'Docker'],
+      [/postman/, 'Postman'],
+      [/nestjs/, 'NestJS'],
+      [/inertia/, 'Inertia.js'],
+    ];
+    const coreSkills = coreMap.filter(([re]) => re.test(evidence)).map(([, label]) => label);
+    const alias: Record<string, string> = { vue: 'Vue.js', nuxt: 'Nuxt.js', dart: 'Flutter & Dart' };
+    const coreLower = new Set(coreSkills.map((s) => s.toLowerCase()));
+
+    const priority = /^(vue|react|next|nuxt|angular|svelte|php|laravel|go|node|typescript|javascript|python|dart|flutter|kotlin|java|mysql|postgresql|mongodb|redis|docker|kubernetes|aws|nginx|tailwind|bootstrap|express|nestjs|django|flask|spring)/i;
+    const extras = [...techSet]
+      .filter((t) => {
+        const norm = alias[t.toLowerCase()] ?? t;
+        return !coreLower.has(norm.toLowerCase());
+      })
+      .sort((a, b) => {
+        const aP = priority.test(a) ? 0 : 1;
+        const bP = priority.test(b) ? 0 : 1;
+        return aP - bP;
+      });
+
+    const sortedTech = [...coreSkills, ...extras];
 
     const featuredRepos = repos
       .filter((r) => r.is_featured)

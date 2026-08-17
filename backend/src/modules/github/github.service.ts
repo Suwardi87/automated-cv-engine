@@ -119,7 +119,13 @@ export class GithubService {
           row.languages = langData ?? {};
           row.topics = topicData ?? [];
 
-          const detected = [...new Set([item.language ?? '', ...Object.keys(langData ?? {})].filter(Boolean))] as string[];
+          const artifactLangs = new Set([
+            'c', 'c++', 'cmake', 'swift', 'objective-c', 'kotlin', 'llvm', 'assembly',
+            'dart-generated', 'makefile', 'gradle', 'plpgsql', 'hack', 'less', 'scss',
+            'smarty', 'blade', 'dockerfile', 'shell', 'jupyter notebook', 'go template', 'lua',
+          ]);
+          const detected = [...new Set([item.language ?? '', ...Object.keys(langData ?? {})].filter(Boolean))]
+            .filter((l) => !artifactLangs.has(l.toLowerCase())) as string[];
           row.tech_stack = detected.length > 0 ? detected : (row.tech_stack ?? []);
 
           row.recent_commits = commitData ?? [];
