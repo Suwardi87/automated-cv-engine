@@ -2,6 +2,12 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.6.3] - 2026-08-17
+- fix(build): feat(deploy): tambah docker-compose.prod.yml + env.prod.example untuk deployment produksi VPS
+
+## [0.6.2] - 2026-08-17
+- fix(build): feat(deploy): tambah docker-compose.prod.yml + .env.prod.example untuk deployment produksi VPS
+
 ## [0.6.1] - 2026-08-17
 - fix(cv): skills CV dari evidence nyata (Laravel/MySQL/Tailwind/Docker dll) + filter artifact language saat sync + bersihkan primary_language misleading
 

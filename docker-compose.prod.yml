@@ -1,0 +1,141 @@
+services:
+  postgres-omnisync:
+    image: postgres:16-alpine
+    container_name: omnisync-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: omnisync
+      POSTGRES_USER: omnisync
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - omnisync_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omnisync -d omnisync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omnisync_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
+
+  nestjs-api:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.nestjs.dev
+    container_name: omnisync-nestjs
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres-omnisync
+    expose:
+      - "9000"
+    volumes:
+      - ./backend:/app
+      - nestjs_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres-omnisync:
+        condition: service_healthy
+    networks:
+      - omnisync_network
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+    profiles: [omnisync]
+
+  nginx:
+    image: nginx:alpine
+    container_name: omnisync-nginx
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - nestjs-api
+      - nuxt-public
+      - nuxt-cms
+    networks:
+      - omnisync_network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    profiles: [omnisync]
+
+  nuxt-public:
+    build:
+      context: .
+      dockerfile: Dockerfile.nuxt.public
+    container_name: omnisync-nuxt-public
+    restart: unless-stopped
+    expose:
+      - "3000"
+    volumes:
+      - ./frontend-public:/app
+      - nuxt_public_modules:/app/node_modules
+      - nuxt_public_nuxt:/app/.nuxt
+    environment:
+      NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
+      NUXT_API_BASE_SSR: http://nestjs-api:9000/api
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3000
+    depends_on:
+      - nestjs-api
+    networks:
+      - omnisync_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
+
+  nuxt-cms:
+    build:
+      context: .
+      dockerfile: Dockerfile.nuxt.cms
+    container_name: omnisync-nuxt-cms
+    restart: unless-stopped
+    expose:
+      - "3001"
+    volumes:
+      - ./frontend-cms:/app
+      - nuxt_cms_modules:/app/node_modules
+      - nuxt_cms_nuxt:/app/.nuxt
+    environment:
+      NUXT_PUBLIC_API_BASE: ${PUBLIC_URL}/api
+      NUXT_API_BASE_SSR: http://nestjs-api:9000/api
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3001
+    depends_on:
+      - nestjs-api
+    networks:
+      - omnisync_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    profiles: [omnisync]
+
+volumes:
+  nestjs_modules:
+  nuxt_public_modules:
+  nuxt_public_nuxt:
+  nuxt_cms_modules:
+  nuxt_cms_nuxt:
+  omnisync_pgdata:
+
+networks:
+  omnisync_network:
+    name: omnisync_network
