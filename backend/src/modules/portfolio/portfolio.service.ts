@@ -67,7 +67,16 @@ export class PortfolioService {
       }),
     ]);
     return {
-      user: { name: user.name, bio: user.bio, avatar_url: user.avatar_url },
+      user: {
+        name: user.name,
+        bio: user.bio,
+        avatar_url: user.avatar_url,
+        job_title: user.job_title,
+        location: user.location,
+        website: user.website,
+        linkedin: user.linkedin,
+        username: user.username,
+      },
       github_projects,
       gitlab_projects,
       media_portfolios,

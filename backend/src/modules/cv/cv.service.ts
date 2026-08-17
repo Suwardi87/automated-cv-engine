@@ -40,6 +40,19 @@ export class CvService {
     return [this.fmtDate(start ?? null), this.fmtDate(end ?? null, isCurrent)].filter(Boolean).join(' — ');
   }
 
+  private deriveSoftSkills(workCount: number, orgCount: number, repoCount: number): string[] {
+    const skills: string[] = [];
+    if (workCount > 0) {
+      skills.push('Koordinasi lintas stakeholder & pengumpulan requirement instansi');
+      skills.push('Dokumentasi teknis & penulisan panduan sistem');
+    }
+    if (orgCount > 0) skills.push('Kepemimpinan tim & manajemen konflik');
+    if (repoCount > 15) skills.push('Manajemen beberapa proyek paralel & prioritasi');
+    skills.push('Problem solving berbasis data & debugging sistematis');
+    skills.push('Belajar mandiri teknologi baru (self-taught, dokumentasi resmi)');
+    return skills.slice(0, 5);
+  }
+
   async generate(userId: number): Promise<CvData> {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -84,12 +97,7 @@ export class CvService {
       technicalSkills: sortedTech.length > 0
         ? sortedTech.slice(0, 20)
         : ['PHP', 'JavaScript', 'Laravel', 'Vue.js'],
-      softSkills: [
-        'Problem Solving & Analytical Thinking',
-        'Adaptability & Fast Learning',
-        'Team Collaboration & Communication',
-        'Time Management & Prioritization',
-      ],
+      softSkills: this.deriveSoftSkills(workExperiences.length, organizations.length, repos.length),
       experiences: workExperiences.map((w) => ({
         role: w.position,
         company: w.company,
@@ -114,9 +122,10 @@ export class CvService {
           ...(o.description ? [o.description] : []),
         ],
       })),
-      certificates: certificates.map((c) =>
-        `${c.name} — ${c.issuer} (${this.fmtDate(c.issue_date)})`,
-      ),
+      certificates: certificates.map((c) => {
+        const date = this.fmtDate(c.issue_date);
+        return `${c.name} — ${c.issuer}${date ? ` (${date})` : ''}`;
+      }),
       portfolioLinks: allRepos.slice(0, 7).map((r) => {
         const feat = r.is_featured ? '★ ' : '';
         const stack = (r.tech_stack || []).filter((t) => !exclude.test(t)).slice(0, 4).join(', ');
@@ -130,5 +139,20 @@ export class CvService {
     const user = await this.userRepo.findOneBy({ username });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     return this.generate(user.id);
+  }
+
+  async findUserMeta(username: string) {
+    const user = await this.userRepo.findOneBy({ username });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return {
+      name: user.name,
+      jobTitle: user.job_title ?? '',
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      location: user.location ?? '',
+      website: user.website ?? '',
+      linkedin: user.linkedin ?? '',
+      github: user.username ? `github.com/${user.username}` : '',
+    };
   }
 }

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CvController } from './cv.controller';
 import { DownloadCvController } from './download-cv.controller';
 import { CvService } from './cv.service';
+import { CvPdfService } from './cv-pdf.service';
 import { User } from '../user/entities/user.entity';
 import { GithubProject } from '../github/entities/github-project.entity';
 import { Education } from '../education/entities/education.entity';
@@ -13,6 +14,6 @@ import { Organization } from '../organization/entities/organization.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([User, GithubProject, Education, WorkExperience, Certificate, Organization])],
   controllers: [CvController, DownloadCvController],
-  providers: [CvService],
+  providers: [CvService, CvPdfService],
 })
 export class CvModule {}

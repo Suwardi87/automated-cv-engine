@@ -48,6 +48,16 @@ export class GithubController {
     return { success: true, data };
   }
 
+  @Put(':project/summary')
+  async updateSummary(
+    @CurrentUser() user: User,
+    @Param('project') project: string,
+    @Body('ai_summary') summary: string,
+  ) {
+    const data = await this.github.updateSummary(+project, user.id, summary ?? '');
+    return { success: true, data };
+  }
+
   @Put(':project/live-url')
   async updateLiveUrl(
     @CurrentUser() user: User,

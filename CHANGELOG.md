@@ -2,6 +2,9 @@
 
 Semua perubahan penting akan dicatat di sini.
 
+## [0.6.0] - 2026-08-17
+- feat(cv): generate CV PDF server-side ATS-friendly via Puppeteer + AI summary manual endpoint + highlights jsonb + hero portfolio (headline, kontak, tombol Unduh CV)
+
 ## [0.5.7] - 2026-08-16
 - fix(github): fix race condition: screenshot service update kolom saja (repo.update) agar tidak menimpa is_featured/is_hidden
 

@@ -32,7 +32,7 @@ export class WorkExperience {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   highlights: string[];
 
   @Column({ default: 0 })

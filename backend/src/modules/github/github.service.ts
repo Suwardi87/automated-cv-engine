@@ -295,6 +295,13 @@ export class GithubService {
     return this.repo.save(project);
   }
 
+  async updateSummary(id: number, userId: number, summary: string) {
+    const project = await this.repo.findOneBy({ id, user_id: userId });
+    if (!project) throw new NotFoundException('Proyek tidak ditemukan');
+    project.ai_summary = (summary ?? '').trim();
+    return this.repo.save(project);
+  }
+
   private detectLiveUrlFromReadme(readme: string | null): string | null {
     if (!readme) return null;
 

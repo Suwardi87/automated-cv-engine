@@ -91,7 +91,7 @@ definePageMeta({ middleware: 'auth' })
 const auth = useAuthStore()
 const loading = ref(false)
 const pdfStage = ref('')
-const user = computed(() => auth.user ?? { name: '', email: '', bio: '' })
+const user = computed(() => auth.user ?? { name: '', email: '', bio: '', username: '' })
 const cvContent = ref<HTMLDivElement | null>(null)
 
 interface CvData {
@@ -136,53 +136,12 @@ async function generateAndDownload() {
     cv.name = user.value.name || data.name || ''
     cv.email = user.value.email || data.email || ''
 
-    await nextTick()
+    pdfStage.value = 'Merender PDF...'
 
-    const element = cvContent.value
-    if (!element) throw new Error('CV element not found')
+    const username = user.value.username
+    if (!username) throw new Error('Username tidak ditemukan')
 
-    pdfStage.value = 'Menyiapkan PDF...'
-
-    const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-      import('html2canvas'),
-      import('jspdf'),
-    ])
-
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
-    })
-
-    const imgData = canvas.toDataURL('image/png')
-    const pageWidthMm = 210
-    const pageHeightMm = 297
-    const imgWidthMm = (canvas.width * 25.4) / 192
-    const imgHeightMm = (canvas.height * 25.4) / 192
-    const scale = Math.min(pageWidthMm / imgWidthMm, 1)
-    const scaledWidthMm = imgWidthMm * scale
-    const scaledHeightMm = imgHeightMm * scale
-
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-
-    pdf.setProperties({
-      title: `CV - ${cv.name}`,
-      author: cv.name,
-      subject: 'Curriculum Vitae',
-      creator: 'OmniSync CV Generator',
-    })
-
-    const verticalPages = Math.ceil(scaledHeightMm / pageHeightMm)
-
-    for (let page = 0; page < verticalPages; page++) {
-      if (page > 0) pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 0, -(page * pageHeightMm), scaledWidthMm, scaledHeightMm)
-    }
-
-    pdf.save(`CV-${cv.name || 'Pengguna'}.pdf`)
+    window.open(`/api/download-cv?username=${encodeURIComponent(username)}`, '_blank')
   } catch (err) {
     console.error('Gagal generate CV:', err)
     pdfStage.value = 'Gagal! Coba lagi'
