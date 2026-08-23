@@ -257,13 +257,13 @@ const skillGroups = computed(() => {
       <div v-else>
         <!-- Parallax Hero: scene 100vh full-bleed ala Firewatch -->
         <header ref="heroRef" class="full-bleed relative mb-14 h-[calc(100vh-4rem)] min-h-[560px] overflow-hidden">
-          <!-- Layer 0: video background (paling jauh, sangat halus) -->
-          <video data-depth="0.08" autoplay muted loop playsinline class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 will-change-transform">
+          <!-- Layer 0: video background (duotone cyan, serasi tema) -->
+          <video data-depth="0.08" autoplay muted loop playsinline class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25 will-change-transform [filter:grayscale(1)_brightness(0.62)_sepia(1)_hue-rotate(175deg)_saturate(2.4)]">
             <source src="/assets/hero.mp4" type="video/mp4" />
           </video>
           <!-- Layer 0b: vignette gelap kuat — konten selalu terbaca -->
           <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgba(4,5,6,0.72),#040506_100%)]"></div>
-          <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#040506]"></div>
+          <div class="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-[#040506]/60 to-[#040506]"></div>
 
           <!-- Layer 1: ambient glow -->
           <div data-depth="0.15" class="pointer-events-none absolute inset-0 will-change-transform">
@@ -289,7 +289,9 @@ const skillGroups = computed(() => {
 
           <!-- Layer 5: konten profil (fade saat scroll) -->
           <div data-depth="0.1" data-fade="true" class="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform">
-            <div class="fade-in relative mx-4 flex max-w-2xl flex-col items-center gap-7 text-center">
+            <div class="relative mx-4 flex max-w-2xl flex-col items-center gap-7 text-center">
+              <div class="pointer-events-none absolute inset-x-[-15%] inset-y-[-18%] -z-10 rounded-[100%] bg-[radial-gradient(ellipse_at_center,rgba(4,5,6,0.88),transparent_75%)]"></div>
+              <div class="fade-in relative flex flex-col items-center gap-7">
               <div class="relative shrink-0">
                 <img
                   v-if="portfolio.user.avatar_url"
@@ -347,6 +349,7 @@ const skillGroups = computed(() => {
                 {{ portfolio.user.location }}
               </a>
                 </div>
+              </div>
               </div>
             </div>
           </div>
