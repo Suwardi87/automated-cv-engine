@@ -91,9 +91,30 @@ function startTyping() {
   const step = () => {
     i++
     typedName.value = full.slice(0, i)
-    if (i < full.length) typeTimer = setTimeout(step, 120)
+    if (i < full.length) typeTimer = setTimeout(step, 110)
   }
-  typeTimer = setTimeout(step, 450)
+  typeTimer = setTimeout(step, 400)
+}
+
+function beginTypingAfterPreloader() {
+  const pre = document.querySelector('.preloader')
+  if (!pre) {
+    startTyping()
+    return
+  }
+  let started = false
+  const go = () => {
+    if (started) return
+    started = true
+    observer.disconnect()
+    clearTimeout(fallback)
+    startTyping()
+  }
+  const observer = new MutationObserver(() => {
+    if (pre.classList.contains('is-done')) go()
+  })
+  observer.observe(pre, { attributes: true, attributeFilter: ['class'] })
+  const fallback = setTimeout(go, 3500)
 }
 
 useSeoMeta({
@@ -188,7 +209,7 @@ function bindHeroParallax() {
 
 onMounted(() => {
   bindHeroParallax()
-  startTyping()
+  beginTypingAfterPreloader()
 })
 
 const featuredProjects = computed(() => portfolio.value?.github_projects.filter(p => p.is_featured) ?? [])
