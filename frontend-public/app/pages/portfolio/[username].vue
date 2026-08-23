@@ -72,6 +72,30 @@ const { data: portfolio, pending, error } = await useAsyncData(`portfolio-${user
   return res.data
 })
 
+const displayName = computed(() => {
+  const raw = portfolio.value?.user?.name ?? 'Suwardi'
+  return String(raw).split(',')[0]!.trim()
+})
+
+const typedName = ref<string>(displayName.value)
+let typeTimer: ReturnType<typeof setTimeout> | undefined
+
+function startTyping() {
+  const full = displayName.value
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    typedName.value = full
+    return
+  }
+  let i = 0
+  typedName.value = ''
+  const step = () => {
+    i++
+    typedName.value = full.slice(0, i)
+    if (i < full.length) typeTimer = setTimeout(step, 120)
+  }
+  typeTimer = setTimeout(step, 450)
+}
+
 useSeoMeta({
   title: () => portfolio.value ? `${portfolio.value.user.name} - Portofolio Profesional` : 'Portofolio Developer',
   description: () => portfolio.value?.user.bio || 'Portofolio developer bertenaga AI dengan sinkronisasi repositori otomatis.',
@@ -97,7 +121,10 @@ function formatTime(dateStr: string): string {
   return `${Math.floor(days / 30)} bulan lalu`
 }
 
-onBeforeUnmount(() => heroCleanup?.())
+onBeforeUnmount(() => {
+  heroCleanup?.()
+  if (typeTimer) clearTimeout(typeTimer)
+})
 
 function bindHeroParallax() {
   const el = heroRef.value
@@ -159,7 +186,10 @@ function bindHeroParallax() {
   }
 }
 
-onMounted(bindHeroParallax)
+onMounted(() => {
+  bindHeroParallax()
+  startTyping()
+})
 
 const featuredProjects = computed(() => portfolio.value?.github_projects.filter(p => p.is_featured) ?? [])
 
@@ -314,7 +344,9 @@ const skillGroups = computed(() => {
                   <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-[#55b3ff]">
                     // {{ portfolio.user.job_title || 'Software Developer' }}
                   </p>
-                  <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">{{ portfolio.user.name }}</h1>
+                  <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                    <span>{{ typedName }}</span><span class="type-cursor" aria-hidden="true"></span>
+                  </h1>
                   <p class="mx-auto max-w-xl text-sm leading-7 text-[#c8c8ca]">
                     {{ portfolio.user.bio || 'Halo! Saya adalah pengembang perangkat lunak profesional dengan fokus pada pembuatan sistem berkualitas tinggi.' }}
                   </p>
@@ -688,5 +720,24 @@ const skillGroups = computed(() => {
 .public-project-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 250px;
+}
+
+.type-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-left: 6px;
+  vertical-align: -0.08em;
+  background: #55b3ff;
+  animation: cursorBlink 0.85s steps(1) infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-cursor { animation: none; opacity: 1; }
 }
 </style>
