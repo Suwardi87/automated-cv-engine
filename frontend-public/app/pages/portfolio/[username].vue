@@ -275,9 +275,9 @@ const skillGroups = computed(() => {
           </div>
           <!-- Layer 2b: lembutkan HUD agar tak memotong teks -->
           <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_46%_40%_at_50%_50%,rgba(4,5,6,0.55),transparent_70%)]"></div>
-          <!-- Layer 3: circuit city skyline (foreground band, redup) -->
-          <div data-depth="0.55" class="pointer-events-none absolute inset-x-[-6%] bottom-[-2%] will-change-transform">
-            <img src="/assets/circuit-city.jpeg" alt="" class="w-full opacity-25 mix-blend-screen invert" />
+          <!-- Layer 3: circuit skyline (PNG transparan, garis ice-blue) -->
+          <div data-depth="0.55" class="pointer-events-none absolute inset-x-[-4%] bottom-0 will-change-transform">
+            <img src="/assets/circuit-glow.png" alt="" class="w-full opacity-70" />
           </div>
           <!-- Layer 4: floating chips (off-screen rapi, hanya dekorasi tepi) -->
           <div data-depth="0.8" data-fade="true" class="pointer-events-none absolute inset-0 hidden opacity-60 will-change-transform lg:block">
@@ -656,8 +656,8 @@ const skillGroups = computed(() => {
 
         <!-- Footer: parallax finale full-bleed -->
         <footer class="full-bleed relative overflow-hidden border-t border-[#1e1f21]">
-          <div data-plx="0.18" class="pointer-events-none absolute inset-[-20%] will-change-transform">
-            <img src="/assets/circuit-city.jpeg" alt="" class="h-full w-full object-cover opacity-25 mix-blend-screen invert" />
+          <div data-plx="0.18" class="pointer-events-none absolute inset-x-0 bottom-0 will-change-transform">
+            <img src="/assets/circuit-glow.png" alt="" class="w-full opacity-50" />
           </div>
           <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#040506] via-[#040506]/60 to-[#040506]/90"></div>
           <div class="relative mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8">
