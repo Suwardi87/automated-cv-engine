@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'portfolio' })
+
 interface Project {
   id: number
   title: string
@@ -62,6 +64,8 @@ interface PortfolioData {
 const route = useRoute()
 const username = computed(() => route.params.username as string)
 const api = useApi()
+const heroRef = ref<HTMLElement | null>(null)
+let heroCleanup: (() => void) | null = null
 
 const { data: portfolio, pending, error } = await useAsyncData(`portfolio-${username.value}`, async () => {
   const res = await api.get<{ success: boolean; data: PortfolioData }>(`/portfolio/${username.value}`)
@@ -92,6 +96,70 @@ function formatTime(dateStr: string): string {
   if (days < 30) return `${Math.floor(days / 7)} minggu lalu`
   return `${Math.floor(days / 30)} bulan lalu`
 }
+
+onBeforeUnmount(() => heroCleanup?.())
+
+function bindHeroParallax() {
+  const el = heroRef.value
+  if (!el) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  const layers = Array.from(el.querySelectorAll<HTMLElement>('[data-depth]'))
+  let raf = 0
+  let mx = 0
+  let my = 0
+
+  const apply = () => {
+    raf = 0
+    const rect = el.getBoundingClientRect()
+    const vh = window.innerHeight
+    const scrollable = Math.max(rect.height - vh * 0.55, 1)
+    const progress = Math.min(1, Math.max(0, -rect.top / scrollable))
+
+    for (const layer of layers) {
+      const depth = parseFloat(layer.dataset.depth || '0.2')
+      const range = rect.height * 0.5
+      const ty = -progress * range * depth + my * 16 * depth
+      const tx = mx * 22 * depth
+      const sc = 1 + progress * 0.05 * depth
+      layer.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(${sc.toFixed(3)})`
+      if (layer.dataset.fade === 'true') {
+        layer.style.opacity = String(Math.max(0, 1 - progress * 1.7).toFixed(2))
+      }
+    }
+  }
+  const schedule = () => {
+    if (!raf) raf = requestAnimationFrame(apply)
+  }
+  const onScroll = () => schedule()
+  const onMouse = (e: MouseEvent) => {
+    const rect = el.getBoundingClientRect()
+    mx = ((e.clientX - rect.left) / rect.width - 0.5) * 2
+    my = ((e.clientY - rect.top) / rect.height - 0.5) * 2
+    schedule()
+  }
+  const onLeave = () => {
+    mx = 0
+    my = 0
+    schedule()
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', schedule)
+  el.addEventListener('mousemove', onMouse)
+  el.addEventListener('mouseleave', onLeave)
+  apply()
+
+  heroCleanup = () => {
+    window.removeEventListener('scroll', onScroll)
+    window.removeEventListener('resize', schedule)
+    el.removeEventListener('mousemove', onMouse)
+    el.removeEventListener('mouseleave', onLeave)
+    if (raf) cancelAnimationFrame(raf)
+  }
+}
+
+onMounted(bindHeroParallax)
 
 const featuredProjects = computed(() => portfolio.value?.github_projects.filter(p => p.is_featured) ?? [])
 
@@ -125,6 +193,31 @@ const topSkills = computed(() => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 12)
 })
+
+const ALIAS: Record<string, string> = { vue: 'Vue.js', nuxt: 'Nuxt.js', dart: 'Flutter & Dart' }
+
+const skillGroups = computed(() => {
+  const expert = [
+    { name: 'Laravel', hint: '5 sistem e-government live' },
+    { name: 'Vue.js', hint: 'frontend semua sistem produksi' },
+    { name: 'PHP', hint: '35 repositori' },
+    { name: 'MySQL', hint: 'DB sistem pemerintah' },
+  ]
+  const advanced = [
+    { name: 'TypeScript', hint: '19 repositori' },
+    { name: 'Flutter & Dart', hint: 'mobile_damkar — GPS real-time' },
+    { name: 'Nuxt.js', hint: 'portofolio ini (SSR)' },
+    { name: 'Tailwind CSS', hint: 'UI modern semua proyek' },
+    { name: 'PostgreSQL', hint: 'backend portofolio' },
+    { name: 'Docker', hint: 'orkestrasi layanan' },
+    { name: 'REST API', hint: 'mobile ↔ web integration' },
+    { name: 'Inertia.js', hint: 'web-ldpi live' },
+  ]
+  const familiar = [
+    { name: 'NestJS' }, { name: 'Python' }, { name: 'Go' }, { name: 'Postman' }, { name: 'Bootstrap' },
+  ]
+  return { expert, advanced, familiar }
+})
 </script>
 
 <template>
@@ -134,7 +227,8 @@ const topSkills = computed(() => {
     <!-- Subtle blue glow -->
     <div class="pointer-events-none absolute left-1/4 top-0 h-[420px] w-[520px] rounded-full bg-[#55b3ff]/[0.07] blur-[140px]"></div>
 
-    <div class="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="relative px-0 py-0 sm:px-0">
+      <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
 
       <!-- Loading State -->
       <div v-if="pending" class="flex min-h-[60vh] flex-col items-center justify-center gap-4">
@@ -161,54 +255,79 @@ const topSkills = computed(() => {
 
       <!-- Main Profile Content -->
       <div v-else>
-        <!-- Header Profile -->
-        <header class="fade-in mb-14 flex flex-col items-center gap-8 text-center sm:flex-row sm:items-start sm:text-left">
-          <div class="relative shrink-0">
-            <img
-              v-if="portfolio.user.avatar_url"
-              :src="portfolio.user.avatar_url"
-              :alt="portfolio.user.name"
-              width="100"
-              height="100"
-              class="h-24 w-24 rounded-full object-cover shadow-[rgba(0,0,0,0.5)_0px_0px_0px_2px,rgba(255,255,255,0.14)_0px_0px_14px_0px]"
-            />
-            <div v-else class="flex h-24 w-24 items-center justify-center rounded-full bg-[#0c0d0e] text-3xl font-bold text-[#8e8e90] shadow-[rgba(0,0,0,0.5)_0px_0px_0px_2px]">
-              {{ portfolio.user.name.charAt(0).toUpperCase() }}
-            </div>
-            <span class="absolute bottom-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#040506] bg-[#0c0d0e]">
-              <span class="h-2.5 w-2.5 rounded-full bg-[#5fc992]"></span>
-            </span>
+        <!-- Parallax Hero: scene 100vh full-bleed ala Firewatch -->
+        <header ref="heroRef" class="full-bleed relative mb-14 h-[calc(100vh-4rem)] min-h-[560px] overflow-hidden">
+          <!-- Layer 0: video background (paling jauh, sangat halus) -->
+          <video data-depth="0.08" autoplay muted loop playsinline class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 will-change-transform">
+            <source src="/assets/hero.mp4" type="video/mp4" />
+          </video>
+          <!-- Layer 0b: vignette gelap kuat — konten selalu terbaca -->
+          <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgba(4,5,6,0.72),#040506_100%)]"></div>
+          <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#040506]"></div>
+
+          <!-- Layer 1: ambient glow -->
+          <div data-depth="0.15" class="pointer-events-none absolute inset-0 will-change-transform">
+            <div class="absolute left-1/2 top-[42%] h-[440px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#55b3ff]/[0.08] blur-[130px]"></div>
+          </div>
+          <!-- Layer 2: HUD ring sintetis (midground, subtle) -->
+          <div data-depth="0.3" class="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform">
+            <img src="/assets/hud-ring.png" alt="" class="h-[88%] w-auto max-w-none opacity-30" />
+          </div>
+          <!-- Layer 2b: lembutkan HUD agar tak memotong teks -->
+          <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_46%_40%_at_50%_50%,rgba(4,5,6,0.55),transparent_70%)]"></div>
+          <!-- Layer 3: circuit city skyline (foreground band, redup) -->
+          <div data-depth="0.55" class="pointer-events-none absolute inset-x-[-6%] bottom-[-2%] will-change-transform">
+            <img src="/assets/circuit-city.jpeg" alt="" class="w-full opacity-25 mix-blend-screen invert" />
+          </div>
+          <!-- Layer 4: floating chips (off-screen rapi, hanya dekorasi tepi) -->
+          <div data-depth="0.8" data-fade="true" class="pointer-events-none absolute inset-0 hidden opacity-60 will-change-transform lg:block">
+            <span class="absolute left-[6%] top-[22%] rounded-full border border-[#1e1f21] bg-[#0c0d0e]/70 px-3 py-1 font-mono text-[11px] text-[#55b3ff]/80 backdrop-blur-sm">Laravel</span>
+            <span class="absolute right-[7%] top-[30%] rounded-full border border-[#1e1f21] bg-[#0c0d0e]/70 px-3 py-1 font-mono text-[11px] text-[#5fc992]/80 backdrop-blur-sm">Flutter</span>
+            <span class="absolute bottom-[22%] left-[10%] rounded-full border border-[#1e1f21] bg-[#0c0d0e]/70 px-3 py-1 font-mono text-[11px] text-[#c8c8ca]/80 backdrop-blur-sm">Vue / Nuxt</span>
+            <span class="absolute bottom-[26%] right-[9%] rounded-full border border-[#1e1f21] bg-[#0c0d0e]/70 px-3 py-1 font-mono text-[11px] text-[#ffbc33]/80 backdrop-blur-sm">PostgreSQL</span>
           </div>
 
-          <div class="flex-1 space-y-4">
-            <div class="space-y-2">
-              <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#55b3ff]">
-                // {{ portfolio.user.job_title || 'Software Developer' }}
-              </p>
-              <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">{{ portfolio.user.name }}</h1>
-              <p class="mx-auto max-w-2xl text-sm leading-relaxed text-[#c8c8ca] sm:mx-0">
-                {{ portfolio.user.bio || 'Halo! Saya adalah pengembang perangkat lunak profesional dengan fokus pada pembuatan sistem berkualitas tinggi.' }}
-              </p>
-            </div>
+          <!-- Layer 5: konten profil (fade saat scroll) -->
+          <div data-depth="0.1" data-fade="true" class="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform">
+            <div class="fade-in relative mx-4 flex max-w-2xl flex-col items-center gap-7 text-center">
+              <div class="relative shrink-0">
+                <img
+                  v-if="portfolio.user.avatar_url"
+                  :src="portfolio.user.avatar_url"
+                  :alt="portfolio.user.name"
+                  width="100"
+                  height="100"
+                  class="h-24 w-24 rounded-full object-cover shadow-[rgba(0,0,0,0.5)_0px_0px_0px_2px,rgba(255,255,255,0.14)_0px_0px_14px_0px]"
+                />
+                <div v-else class="flex h-24 w-24 items-center justify-center rounded-full bg-[#0c0d0e] text-3xl font-bold text-[#8e8e90] shadow-[rgba(0,0,0,0.5)_0px_0px_0px_2px]">
+                  {{ portfolio.user.name.charAt(0).toUpperCase() }}
+                </div>
+                <span class="absolute bottom-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#040506] bg-[#0c0d0e]">
+                  <span class="h-2.5 w-2.5 rounded-full bg-[#5fc992]"></span>
+                </span>
+              </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              <a
-                :href="`/api/download-cv?username=${portfolio.user.username || username}`"
-                target="_blank"
-                class="inline-flex items-center gap-2 rounded-full bg-[#55b3ff] px-5 py-2 text-xs font-semibold text-[#07080a] transition-colors hover:bg-[#6cbfff]"
-              >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                Unduh CV
-              </a>
+              <div class="space-y-4">
+                <div class="space-y-3">
+                  <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-[#55b3ff]">
+                    // {{ portfolio.user.job_title || 'Software Developer' }}
+                  </p>
+                  <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">{{ portfolio.user.name }}</h1>
+                  <p class="mx-auto max-w-xl text-sm leading-7 text-[#c8c8ca]">
+                    {{ portfolio.user.bio || 'Halo! Saya adalah pengembang perangkat lunak profesional dengan fokus pada pembuatan sistem berkualitas tinggi.' }}
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-2.5 pt-1">
               <a
                 v-if="portfolio.user.linkedin"
                 :href="portfolio.user.linkedin"
                 target="_blank"
                 rel="noopener"
-                class="inline-flex items-center gap-2 rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-5 py-2 text-xs font-medium text-[#c8c8ca] transition-colors hover:border-[#262728] hover:bg-[#151617] hover:text-white"
+                class="inline-flex items-center gap-2 rounded-full bg-[#55b3ff] px-5 py-2.5 text-xs font-semibold text-[#07080a] transition-colors hover:bg-[#6cbfff]"
               >
                 <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
-                LinkedIn
+                Hubungi Saya
               </a>
               <a
                 :href="`https://github.com/${portfolio.user.username}`"
@@ -227,12 +346,23 @@ const topSkills = computed(() => {
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 {{ portfolio.user.location }}
               </a>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        <!-- Stats Bar -->
-        <section class="mb-14 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <!-- Scroll hint -->
+        <div class="relative -mt-24 mb-4 flex justify-center">
+          <div class="flex flex-col items-center gap-2 text-[#5e5f61]">
+            <span class="font-mono text-[10px] uppercase tracking-[0.3em]">Gulir</span>
+            <span class="block h-8 w-px animate-pulse bg-gradient-to-b from-[#55b3ff] to-transparent"></span>
+          </div>
+        </div>
+
+        <!-- Stats Bar: full-bleed band -->
+        <section class="full-bleed mb-12 border-y border-[#1e1f21] bg-[#0a0b0c]">
+          <div class="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-8 sm:grid-cols-4 sm:px-6 lg:px-8">
           <div v-reveal="{ delay: 0 }" class="rounded-xl border border-[#1e1f21] bg-[#0c0d0e] p-5 text-center transition-colors hover:border-[#262728]">
             <p class="text-3xl font-bold tracking-tight text-[#55b3ff]">{{ stats.totalProjects }}</p>
             <p class="mt-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8e8e90]">Total Proyek</p>
@@ -249,14 +379,17 @@ const topSkills = computed(() => {
             <p class="text-3xl font-bold tracking-tight text-[#55b3ff]">{{ stats.techCount }}</p>
             <p class="mt-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8e8e90]">Teknologi</p>
           </div>
+          </div>
         </section>
 
         <!-- Featured Projects Showcase -->
-        <section v-if="featuredProjects.length" class="mb-14">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Proyek Unggulan</h2>
-            <span class="rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-2.5 py-0.5 font-mono text-[10px] font-semibold text-[#55b3ff]">{{ featuredProjects.length }}</span>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <section v-if="featuredProjects.length" id="proyek" class="mb-12 scroll-mt-24">
+          <div class="mb-8">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">01 / Karya Pilihan</p>
+            <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+              <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Proyek Unggulan</h2>
+              <span class="rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-3 py-1 font-mono text-[10px] font-semibold text-[#55b3ff]">{{ featuredProjects.length }} proyek</span>
+            </div>
           </div>
 
           <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -306,7 +439,7 @@ const topSkills = computed(() => {
                   {{ project.title }}
                   <svg class="h-3 w-3 text-[#5e5f61] transition-colors group-hover:text-[#6cbfff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                 </a>
-                <p v-if="project.ai_summary" class="mb-4 text-xs leading-relaxed text-[#8e8e90] line-clamp-2">{{ project.ai_summary }}</p>
+                <p v-if="project.ai_summary" class="mb-4 text-sm leading-relaxed text-[#9a9b9d] line-clamp-2">{{ project.ai_summary }}</p>
                 <div class="mt-auto flex flex-wrap gap-1.5">
                   <span
                     v-for="tech in (project.tech_stack ?? []).slice(0, 5)"
@@ -319,30 +452,87 @@ const topSkills = computed(() => {
           </div>
         </section>
 
-        <!-- Skills Showcase -->
-        <section v-if="topSkills.length" class="mb-14">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Tech Stack</h2>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <!-- Skills Showcase: full-bleed band -->
+        <section v-if="topSkills.length" class="full-bleed mb-12 border-y border-[#1e1f21] bg-[#0a0b0c]">
+          <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div class="mb-8">
+              <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">02 / Perangkat</p>
+              <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+                <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Tech Stack</h2>
+              </div>
+            </div>
+          <div class="grid gap-10 lg:grid-cols-3">
+            <div v-reveal>
+              <div class="mb-5 flex items-center gap-2.5">
+                <span class="h-2 w-2 rounded-full bg-[#5fc992]"></span>
+                <h3 class="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[#5fc992]">Mahir</h3>
+              </div>
+              <ul class="space-y-3.5">
+                <li v-for="s in skillGroups.expert" :key="s.name" class="group">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-sm font-semibold text-white">{{ s.name }}</span>
+                  </div>
+                  <p class="mt-0.5 text-xs text-[#8e8e90]">{{ s.hint }}</p>
+                  <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#151617]">
+                    <div class="h-full w-full rounded-full bg-[#5fc992]/80"></div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div v-reveal="{ delay: 120 }">
+              <div class="mb-5 flex items-center gap-2.5">
+                <span class="h-2 w-2 rounded-full bg-[#55b3ff]"></span>
+                <h3 class="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[#55b3ff]">Kuat</h3>
+              </div>
+              <ul class="space-y-3.5">
+                <li v-for="s in skillGroups.advanced" :key="s.name" class="group">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="text-sm font-semibold text-white">{{ s.name }}</span>
+                  </div>
+                  <p class="mt-0.5 text-xs text-[#8e8e90]">{{ s.hint }}</p>
+                  <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#151617]">
+                    <div class="h-full w-[72%] rounded-full bg-[#55b3ff]/80"></div>
+                  </div>
+                </li>
+              </ul>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <span v-for="s in skillGroups.familiar" :key="s.name" class="rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-3 py-1 font-mono text-[11px] text-[#8e8e90]">{{ s.name }}</span>
+              </div>
+              <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[#5e5f61]">+ eksplorasi: NestJS · Python · Go · Postman · Bootstrap</p>
+            </div>
+
+            <div v-reveal="{ delay: 240 }" class="flex flex-col justify-between gap-6">
+              <div>
+                <div class="mb-5 flex items-center gap-2.5">
+                  <span class="h-2 w-2 rounded-full bg-[#ffbc33]"></span>
+                  <h3 class="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[#ffbc33]">Fondasi</h3>
+                </div>
+                <ul class="space-y-2.5 text-sm text-[#c8c8ca]">
+                  <li class="flex gap-2.5"><span class="text-[#55b3ff]">→</span> Arsitektur monorepo & full-stack delivery end-to-end</li>
+                  <li class="flex gap-2.5"><span class="text-[#55b3ff]">→</span> Integrasi mobile ↔ web via REST API</li>
+                  <li class="flex gap-2.5"><span class="text-[#55b3ff]">→</span> Deployment Docker & CI/CD git hooks</li>
+                  <li class="flex gap-2.5"><span class="text-[#55b3ff]">→</span> Testing (PHPUnit, Jest, Postman)</li>
+                </ul>
+              </div>
+              <div class="rounded-xl border border-[#1e1f21] bg-[#0c0d0e]/60 p-5">
+                <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-[#5e5f61]">Basis data</p>
+                <p class="mt-2 text-sm font-semibold text-white">MySQL · PostgreSQL · Redis</p>
+                <p class="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[#5e5f61]">DevOps</p>
+                <p class="mt-2 text-sm font-semibold text-white">Docker · Nginx · Linux</p>
+              </div>
+            </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <span
-              v-for="(skill, i) in topSkills"
-              :key="skill.name"
-              v-reveal="{ delay: Math.min(i * 40, 400) }"
-              class="rounded-lg border border-[#1e1f21] bg-[#0c0d0e] px-3 py-1.5 font-mono text-xs font-medium text-[#c8c8ca] transition-colors hover:border-[#55b3ff]/50 hover:bg-[#55b3ff]/10 hover:text-[#6cbfff]"
-            >
-              {{ skill.name }}
-              <span class="ml-1.5 text-[10px] text-[#5e5f61]">{{ skill.count }}</span>
-            </span>
           </div>
         </section>
 
         <!-- Work Experience Section -->
-        <section v-if="portfolio.work_experiences?.length" class="mb-14">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Pengalaman Kerja</h2>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <section v-if="portfolio.work_experiences?.length" id="pengalaman" class="mb-12 scroll-mt-24">
+          <div class="mb-8">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">03 / Jejak Karier</p>
+            <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+              <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Pengalaman Kerja</h2>
+            </div>
           </div>
           <div class="space-y-4">
             <div v-for="(exp, i) in portfolio.work_experiences" :key="exp.id" v-reveal="{ delay: i * 80 }" class="card-lift rounded-xl border border-[#1e1f21] bg-[#0c0d0e] p-6 shadow-[rgb(22,23,25)_0px_0px_0px_1px,rgb(4,5,6)_0px_0px_0px_1px_inset] transition-colors hover:border-[#262728]">
@@ -356,9 +546,9 @@ const topSkills = computed(() => {
                   <span class="font-mono text-[11px] text-[#8e8e90]">{{ fmtDate(exp.start_date) }}{{ exp.is_current ? ' — Sekarang' : exp.end_date ? ' — ' + fmtDate(exp.end_date) : '' }}</span>
                 </div>
               </div>
-              <p v-if="exp.description" class="mt-3 text-xs leading-relaxed text-[#8e8e90]">{{ exp.description }}</p>
+              <p v-if="exp.description" class="mt-3 text-sm leading-relaxed text-[#9a9b9d]">{{ exp.description }}</p>
               <ul v-if="exp.highlights?.length" class="mt-3 space-y-1.5">
-                <li v-for="(h, i) in exp.highlights" :key="i" class="flex items-start gap-2 text-xs text-[#c8c8ca]">
+                <li v-for="(h, i) in exp.highlights" :key="i" class="flex items-start gap-2 text-sm text-[#c8c8ca]">
                   <span class="mt-1 h-1 w-1 shrink-0 rounded-full bg-[#55b3ff]"></span>
                   {{ h }}
                 </li>
@@ -368,26 +558,30 @@ const topSkills = computed(() => {
         </section>
 
         <!-- Education Section -->
-        <section v-if="portfolio.educations?.length" class="mb-14">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Pendidikan</h2>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <section v-if="portfolio.educations?.length" id="pendidikan" class="mb-12 scroll-mt-24">
+          <div class="mb-8">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">04 / Akademik</p>
+            <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+              <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Pendidikan</h2>
+            </div>
           </div>
           <div class="grid gap-4 md:grid-cols-2">
             <div v-for="(edu, i) in portfolio.educations" :key="edu.id" v-reveal="{ delay: i * 80 }" class="card-lift rounded-xl border border-[#1e1f21] bg-[#0c0d0e] p-6 transition-colors hover:border-[#262728]">
               <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-[#55b3ff]">{{ edu.degree }}{{ edu.field_of_study ? ` — ${edu.field_of_study}` : '' }}</p>
               <p class="mt-1.5 text-base font-semibold text-white">{{ edu.institution }}</p>
               <p class="mt-1 font-mono text-[11px] text-[#8e8e90]">{{ fmtDate(edu.start_date) }}{{ edu.end_date ? ' — ' + fmtDate(edu.end_date) : ' — Sekarang' }}</p>
-              <p v-if="edu.description" class="mt-3 text-xs leading-relaxed text-[#8e8e90]">{{ edu.description }}</p>
+              <p v-if="edu.description" class="mt-3 text-sm leading-relaxed text-[#9a9b9d]">{{ edu.description }}</p>
             </div>
           </div>
         </section>
 
         <!-- Certificates Section -->
-        <section v-if="portfolio.certificates?.length" class="mb-14">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Sertifikat</h2>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <section v-if="portfolio.certificates?.length" id="sertifikat" class="mb-12 scroll-mt-24">
+          <div class="mb-8">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">05 / Kredensial</p>
+            <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+              <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Sertifikat</h2>
+            </div>
           </div>
           <div class="grid gap-4 md:grid-cols-2">
             <div v-for="(cert, i) in portfolio.certificates" :key="cert.id" v-reveal="{ delay: i * 80 }" class="card-lift rounded-xl border border-[#1e1f21] bg-[#0c0d0e] p-6 transition-colors hover:border-[#262728]">
@@ -395,7 +589,7 @@ const topSkills = computed(() => {
                 <p class="text-sm font-semibold text-white">{{ cert.name }}</p>
                 <svg class="mt-0.5 h-4 w-4 shrink-0 text-[#55b3ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
               </div>
-              <p class="mt-0.5 text-xs text-[#c8c8ca]">{{ cert.issuer }}</p>
+              <p class="mt-0.5 text-sm text-[#c8c8ca]">{{ cert.issuer }}</p>
               <p v-if="cert.issue_date" class="mt-1 font-mono text-[11px] text-[#8e8e90]">{{ cert.issue_date }}</p>
               <p v-if="cert.description" class="mt-2 text-xs text-[#8e8e90]">{{ cert.description }}</p>
               <a v-if="cert.credential_url" :href="cert.credential_url" target="_blank" class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#6cbfff] transition-colors hover:text-[#83cbff]">
@@ -406,18 +600,22 @@ const topSkills = computed(() => {
           </div>
         </section>
 
-        <!-- GitLab Projects Grid -->
-        <section v-if="portfolio.gitlab_projects.length" class="mb-10">
-          <div class="mb-6 flex items-center gap-3">
-            <h2 class="text-lg font-bold tracking-tight text-white">Repositori GitLab</h2>
-            <span class="rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-2.5 py-0.5 font-mono text-[10px] font-semibold text-[#8e8e90]">{{ portfolio.gitlab_projects.length }}</span>
-            <div class="h-px flex-1 bg-[#1e1f21]"></div>
+        <!-- GitLab Projects Grid: full-bleed band -->
+        <section v-if="portfolio.gitlab_projects.length" class="full-bleed mb-12 border-y border-[#1e1f21] bg-[#0a0b0c]">
+          <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div class="mb-8">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-[#55b3ff]">06 / Repositori Lain</p>
+            <div class="mt-3 flex items-center justify-between gap-4 border-b border-[#1e1f21] pb-5">
+              <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Repositori GitLab</h2>
+              <span class="rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-3 py-1 font-mono text-[10px] font-semibold text-[#8e8e90]">{{ portfolio.gitlab_projects.length }} repo</span>
+            </div>
           </div>
 
           <div class="grid gap-4 md:grid-cols-2">
             <article
-              v-for="project in portfolio.gitlab_projects"
+              v-for="(project, gi) in portfolio.gitlab_projects"
               :key="project.id"
+              v-reveal="{ delay: Math.min(gi * 60, 400) }"
               class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-[#1e1f21] bg-[#0c0d0e] p-5 transition-all hover:-translate-y-1 hover:border-[#262728] hover:bg-[#151617]"
             >
               <div class="relative">
@@ -430,7 +628,7 @@ const topSkills = computed(() => {
                   </a>
                 </div>
 
-                <p v-if="project.ai_summary" class="mb-4 text-xs leading-relaxed text-[#8e8e90]">
+                <p v-if="project.ai_summary" class="mb-4 text-sm leading-relaxed text-[#9a9b9d]">
                   {{ project.ai_summary }}
                 </p>
 
@@ -450,16 +648,35 @@ const topSkills = computed(() => {
               </div>
             </article>
           </div>
+          </div>
         </section>
 
-        <!-- Footer -->
-        <footer class="mt-8 border-t border-[#1e1f21] pt-6 text-center">
-          <p class="font-mono text-[11px] text-[#5e5f61]">
-            © {{ new Date().getFullYear() }} {{ portfolio.user.name }} — Dibangun dengan OmniSync
-          </p>
+        <!-- Footer: parallax finale full-bleed -->
+        <footer class="full-bleed relative overflow-hidden border-t border-[#1e1f21]">
+          <div data-plx="0.18" class="pointer-events-none absolute inset-[-20%] will-change-transform">
+            <img src="/assets/circuit-city.jpeg" alt="" class="h-full w-full object-cover opacity-25 mix-blend-screen invert" />
+          </div>
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#040506] via-[#040506]/60 to-[#040506]/90"></div>
+          <div class="relative mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-16 text-center sm:px-6 lg:px-8">
+            <div data-plx="0.08" class="will-change-transform">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full border border-[#55b3ff]/40 bg-[#55b3ff]/10">
+                <span class="text-lg font-bold text-[#55b3ff]">S</span>
+              </div>
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight text-white">Tertarik bekerja sama?</h2>
+            <p class="max-w-md text-sm leading-relaxed text-[#8e8e90]">Saya terbuka untuk kolaborasi proyek web, mobile, dan sistem informasi. Hubungi saya lewat LinkedIn atau unduh CV saya.</p>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <a :href="portfolio.user.linkedin || '#'" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full bg-[#55b3ff] px-5 py-2 text-xs font-semibold text-[#07080a] transition-colors hover:bg-[#6cbfff]">Hubungi Saya</a>
+              <a :href="`/api/download-cv?username=${portfolio.user.username || username}`" target="_blank" class="inline-flex items-center gap-2 rounded-full border border-[#1e1f21] bg-[#0c0d0e] px-5 py-2 text-xs font-medium text-[#c8c8ca] transition-colors hover:border-[#262728] hover:bg-[#151617] hover:text-white">Unduh CV</a>
+            </div>
+            <p class="mt-6 font-mono text-[11px] text-[#5e5f61]">
+              © {{ new Date().getFullYear() }} {{ portfolio.user.name }} — Padang, Indonesia
+            </p>
+          </div>
         </footer>
       </div>
 
+      </div>
     </div>
   </div>
 </template>
