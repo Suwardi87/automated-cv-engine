@@ -86,14 +86,37 @@ function startTyping() {
     typedName.value = full
     return
   }
+
+  let mode: 'typing' | 'pauseFull' | 'deleting' | 'pauseEmpty' = 'typing'
   let i = 0
   typedName.value = ''
-  const step = () => {
-    i++
-    typedName.value = full.slice(0, i)
-    if (i < full.length) typeTimer = setTimeout(step, 110)
+
+  const TYPE_MS = 130
+  const DELETE_MS = 70
+  const PAUSE_FULL_MS = 2200
+  const PAUSE_EMPTY_MS = 550
+
+  const loop = () => {
+    if (mode === 'typing') {
+      i++
+      typedName.value = full.slice(0, i)
+      if (i < full.length) typeTimer = setTimeout(loop, TYPE_MS)
+      else {
+        mode = 'pauseFull'
+        typeTimer = setTimeout(() => { mode = 'deleting'; loop() }, PAUSE_FULL_MS)
+      }
+    } else if (mode === 'deleting') {
+      i--
+      typedName.value = full.slice(0, i)
+      if (i > 0) typeTimer = setTimeout(loop, DELETE_MS)
+      else {
+        mode = 'pauseEmpty'
+        typeTimer = setTimeout(() => { mode = 'typing'; loop() }, PAUSE_EMPTY_MS)
+      }
+    }
   }
-  typeTimer = setTimeout(step, 400)
+
+  loop()
 }
 
 function beginTypingAfterPreloader() {
